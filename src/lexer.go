@@ -119,8 +119,8 @@ func (lexer *Lexer) pushMirrorTokenStack(token int) {
 
 func (lexer *Lexer) dumpMirrorTokenStackToString() string {
 	var stackInString strings.Builder
-	for _, token := range lexer.MirrorTokenStack {
-		stackInString.WriteString(tokenNameMap[token])
+	for i := len(lexer.MirrorTokenStack) - 1; i >= 0; i-- {
+		stackInString.WriteString(tokenNameMap[lexer.MirrorTokenStack[i]])
 	}
 	return stackInString.String()
 }
