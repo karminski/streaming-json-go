@@ -147,6 +147,11 @@ func (lexer *Lexer) skipJSONSegment(n int) {
 	lexer.JSONSegment = lexer.JSONSegment[n:]
 }
 
+func (lexer *Lexer) appendDummyPlaceholder() {
+	// check if "," or ":" symbol on top of lexer.TokenStack
+	lexer.getTopTokenOnStack()
+}
+
 func (lexer *Lexer) matchToken() (int, byte) {
 	// finish
 	fmt.Printf("[DUMP] len(lexer.JSONSegment): %d\n", len(lexer.JSONSegment))
