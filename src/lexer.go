@@ -147,9 +147,21 @@ func (lexer *Lexer) skipJSONSegment(n int) {
 	lexer.JSONSegment = lexer.JSONSegment[n:]
 }
 
-func (lexer *Lexer) appendDummyPlaceholder() {
+func (lexer *Lexer) steamStoppedInAnObject() bool {
+	return lexer.getTopTokenOnMirrorStack() == TOKEN_RIGHT_BRACE_SYMBOL
+}
+
+func (lexer *Lexer) getDummyPlaceholder() string {
 	// check if "," or ":" symbol on top of lexer.TokenStack
-	lexer.getTopTokenOnStack()
+	if lexer.steamStoppedInAnObject() {
+		switch lexer.getTopTokenOnStack() {
+		case TOKEN_DOT:
+			return `0`
+		case TOKEN_COLON:
+			return `: null`
+		}
+	}
+	return ""
 }
 
 func (lexer *Lexer) matchToken() (int, byte) {
@@ -222,5 +234,5 @@ func (lexer *Lexer) AppendString(str string) error {
 }
 
 func (lexer *Lexer) CompleteJSON() string {
-	return lexer.JSONContent.String() + lexer.dumpMirrorTokenStackToString()
+	return lexer.JSONContent.String() + lexer.getDummyPlaceholder() + lexer.dumpMirrorTokenStackToString()
 }
