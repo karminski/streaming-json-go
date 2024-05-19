@@ -23,7 +23,7 @@ func TestCompleteJSON(t *testing.T) {
 	streamingJSONCase := map[string]string{
 		//`{`:  `{}`,
 		//`{}`: `{}`,
-		`{"`: `{"": null}`,
+		`{"`: `{"":null}`,
 		//`{""`:   `{"": null}`,
 		//`{"a`:   `{"a": null}`,
 		//`{"a"`:  `{"a": null}`,

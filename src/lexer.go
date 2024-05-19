@@ -47,6 +47,9 @@ var tokenNameMap = map[int]string{
 	TOKEN_COMMA:            ",",
 	TOKEN_QUOTE:            "\"",
 	TOKEN_ESCAPE_CHARACTER: "\\",
+	TOKEN_NULL:             "null",
+	TOKEN_TRUE:             "true",
+	TOKEN_FLASE:            "false",
 }
 
 var leftPairTokens = map[int]bool{
@@ -89,7 +92,7 @@ func (lexer *Lexer) getTopTokenOnMirrorStack() int {
 	if mirrotTokenStackLen == 0 {
 		return TOKEN_EOF
 	}
-	return lexer.TokenStack[mirrotTokenStackLen-1]
+	return lexer.MirrorTokenStack[mirrotTokenStackLen-1]
 }
 
 func (lexer *Lexer) popTokenStack() int {
@@ -236,6 +239,8 @@ func (lexer *Lexer) AppendString(str string) error {
 		case TOKEN_QUOTE:
 			fmt.Printf("    case TOKEN_QUOTE:\n")
 			fmt.Printf("    lexer.streamStoppedInAnObject():%+v\n", lexer.streamStoppedInAnObject())
+			fmt.Printf("    lexer.getTopTokenOnMirrorStack():%+v\n", lexer.getTopTokenOnMirrorStack())
+
 			lexer.JSONContent.WriteByte(tokenSymbol)
 			lexer.pushTokenStack(token)
 			if lexer.streamStoppedInAnObject() {
