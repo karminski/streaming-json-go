@@ -274,6 +274,12 @@ func (lexer *Lexer) AppendString(str string) error {
 			} else {
 				return fmt.Errorf("invalied quote token in json stream")
 			}
+		case TOKEN_COLON:
+			lexer.JSONContent.WriteByte(tokenSymbol)
+			lexer.pushTokenStack(token)
+			if lexer.streamStoppedInAnObject() {
+				lexer.pushMirrorTokenStack(TOKEN_NULL)
+			}
 		default:
 			lexer.JSONContent.WriteByte(tokenSymbol)
 			if lexer.isLeftPairToken(token) {
