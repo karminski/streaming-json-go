@@ -28,33 +28,33 @@ func TestCompleteJSON(t *testing.T) {
 		`{"a`:   `{"a":null}`,
 		`{"a"`:  `{"a":null}`,
 		`{"a":`: `{"a":null}`,
-		//`{"a": n`:         `{"a": null}`,
-		//`{"a": nu`:        `{"a": null}`,
-		//`{"a": nul`:       `{"a": null}`,
-		//`{"a": null`:      `{"a": null}`,
-		//`{"a": null, `:    `{"a": null}`, // can not detect context, remove ","
-		//`{"a": t`:         `{"a": true}`,
-		//`{"a": tr`:        `{"a": true}`,
-		//`{"a": tru`:       `{"a": true}`,
-		//`{"a": true`:      `{"a": true}`,
-		//`{"a": true, `:    `{"a": true}`, // can not detect context, remove ","
-		//`{"a": f`:         `{"a": false}`,
-		//`{"a": fa`:        `{"a": false}`,
-		//`{"a": fal`:       `{"a": false}`,
-		//`{"a": fals`:      `{"a": false}`,
-		//`{"a": false`:     `{"a": false}`,
-		//`{"a": false, `:   `{"a": false}`, // can not detect context, remove ","
-		//`{"a": 12`:        `{"a": 12}`,
-		//`{"a": 12,`:       `{"a": 12}`, // can not detect context, remove ","
-		//`{"a": 12.`:       `{"a": 12.0}`,
-		//`{"a": 12.15`:     `{"a": 12.15}`,
-		//`{"a": 12.15,`:    `{"a": 12.15}`, // can not detect context, remove ","
-		//`{"a": "`:         `{"a": ""}`,
-		//`{"a": ""`:        `{"a": ""}`,
-		//`{"a": "",`:       `{"a": ""}`, // can not detect context, remove ","
-		//`{"a": "string`:   `{"a": "string"}`,
-		//`{"a": "string"`:  `{"a": "string"}`,
-		//`{"a": "string",`: `{"a": "string"}`, // can not detect context, remove ","
+		//`{"a": n`:         `{"a":null}`,
+		//`{"a": nu`:        `{"a":null}`,
+		//`{"a": nul`:       `{"a":null}`,
+		//`{"a": null`:      `{"a":null}`,
+		//`{"a": null, `:    `{"a":null}`, // can not detect context, remove ","
+		//`{"a": t`:         `{"a":true}`,
+		//`{"a": tr`:        `{"a":true}`,
+		//`{"a": tru`:       `{"a":true}`,
+		//`{"a": true`:      `{"a":true}`,
+		//`{"a": true, `:    `{"a":true}`, // can not detect context, remove ","
+		//`{"a": f`:         `{"a":false}`,
+		//`{"a": fa`:        `{"a":false}`,
+		//`{"a": fal`:       `{"a":false}`,
+		//`{"a": fals`:      `{"a":false}`,
+		//`{"a": false`:     `{"a":false}`,
+		//`{"a": false, `:   `{"a":false}`, // can not detect context, remove ","
+		//`{"a": 12`:        `{"a":12}`,
+		//`{"a": 12,`:       `{"a":12}`, // can not detect context, remove ","
+		//`{"a": 12.`:       `{"a":12.0}`,
+		//`{"a": 12.15`:     `{"a":12.15}`,
+		//`{"a": 12.15,`:    `{"a":12.15}`, // can not detect context, remove ","
+		//`{"a": "`:         `{"a":""}`,
+		//`{"a": ""`:        `{"a":""}`,
+		//`{"a": "",`:       `{"a":""}`, // can not detect context, remove ","
+		//`{"a": "string`:   `{"a":"string"}`,
+		//`{"a": "string"`:  `{"a":"string"}`,
+		//`{"a": "string",`: `{"a":"string"}`, // can not detect context, remove ","
 		//`[`:               `[]`,
 		//`[]`:              `[]`,
 		//`[n`:              `[null]`,
@@ -87,7 +87,8 @@ func TestCompleteJSON(t *testing.T) {
 
 	}
 	for testCase, expect := range streamingJSONCase {
-		fmt.Printf("current test case: %s\n", testCase)
+		fmt.Printf("\n\n---------------------------\n")
+		fmt.Printf("current test case: `%s`\n", testCase)
 		lexer := NewLexer()
 		errInAppendString := lexer.AppendString(testCase)
 		ret := lexer.CompleteJSON()
