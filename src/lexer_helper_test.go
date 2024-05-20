@@ -28,3 +28,22 @@ func Test_matchStack(t *testing.T) {
 
 	assert.Equal(t, true, matchResult, "the tokens should be match")
 }
+
+func Test_matchStack2(t *testing.T) {
+	stack := []int{
+		TOKEN_LEFT_BRACE,
+		TOKEN_QUOTE,
+		TOKEN_QUOTE,
+		TOKEN_COLON,
+		TOKEN_ALPHABET_LOWERCASE_N,
+		TOKEN_ALPHABET_LOWERCASE_U,
+	}
+	tokens := []int{
+		TOKEN_ALPHABET_LOWERCASE_N,
+		TOKEN_ALPHABET_LOWERCASE_U,
+	}
+
+	matchResult := matchStack(stack, tokens)
+
+	assert.Equal(t, true, matchResult, "the tokens should be match")
+}

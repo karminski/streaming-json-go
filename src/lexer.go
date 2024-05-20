@@ -34,15 +34,24 @@ const (
 
 // token symbol const
 const (
-	TOKEN_LEFT_BRACKET_SYMBOL     = '['
-	TOKEN_RIGHT_BRACKET_SYMBOL    = ']'
-	TOKEN_LEFT_BRACE_SYMBOL       = '{'
-	TOKEN_RIGHT_BRACE_SYMBOL      = '}'
-	TOKEN_COLON_SYMBOL            = ':'
-	TOKEN_DOT_SYMBOL              = '.'
-	TOKEN_COMMA_SYMBOL            = ','
-	TOKEN_QUOTE_SYMBOL            = '"'
-	TOKEN_ESCAPE_CHARACTER_SYMBOL = '\\'
+	TOKEN_LEFT_BRACKET_SYMBOL         = '['
+	TOKEN_RIGHT_BRACKET_SYMBOL        = ']'
+	TOKEN_LEFT_BRACE_SYMBOL           = '{'
+	TOKEN_RIGHT_BRACE_SYMBOL          = '}'
+	TOKEN_COLON_SYMBOL                = ':'
+	TOKEN_DOT_SYMBOL                  = '.'
+	TOKEN_COMMA_SYMBOL                = ','
+	TOKEN_QUOTE_SYMBOL                = '"'
+	TOKEN_ESCAPE_CHARACTER_SYMBOL     = '\\'
+	TOKEN_ALPHABET_LOWERCASE_A_SYMBOL = 'a'
+	TOKEN_ALPHABET_LOWERCASE_E_SYMBOL = 'e'
+	TOKEN_ALPHABET_LOWERCASE_F_SYMBOL = 'f'
+	TOKEN_ALPHABET_LOWERCASE_L_SYMBOL = 'l'
+	TOKEN_ALPHABET_LOWERCASE_N_SYMBOL = 'n'
+	TOKEN_ALPHABET_LOWERCASE_R_SYMBOL = 'r'
+	TOKEN_ALPHABET_LOWERCASE_S_SYMBOL = 's'
+	TOKEN_ALPHABET_LOWERCASE_T_SYMBOL = 't'
+	TOKEN_ALPHABET_LOWERCASE_U_SYMBOL = 'u'
 )
 
 var tokenNameMap = map[int]string{
@@ -224,7 +233,7 @@ func (lexer *Lexer) streamStoppedInAnArray() bool {
 }
 
 func (lexer *Lexer) streamStoppedInAString() bool {
-	return lexer.getTopTokenOnMirrorStack() == TOKEN_QUOTE
+	return lexer.getTopTokenOnStack() == TOKEN_QUOTE && lexer.getTopTokenOnMirrorStack() == TOKEN_QUOTE
 }
 
 func (lexer *Lexer) matchToken() (int, byte) {
@@ -234,37 +243,64 @@ func (lexer *Lexer) matchToken() (int, byte) {
 	if len(lexer.JSONSegment) == 0 {
 		return TOKEN_EOF, byte(0)
 	}
-	tokenSynbol := lexer.JSONSegment[0]
+	tokenSymbol := lexer.JSONSegment[0]
 
 	// check token
-	switch tokenSynbol {
+	switch tokenSymbol {
 	case TOKEN_LEFT_BRACKET_SYMBOL:
 		lexer.skipJSONSegment(1)
-		return TOKEN_LEFT_BRACKET, tokenSynbol
+		return TOKEN_LEFT_BRACKET, tokenSymbol
 	case TOKEN_RIGHT_BRACKET_SYMBOL:
 		lexer.skipJSONSegment(1)
-		return TOKEN_RIGHT_BRACKET, tokenSynbol
+		return TOKEN_RIGHT_BRACKET, tokenSymbol
 	case TOKEN_LEFT_BRACE_SYMBOL:
 		lexer.skipJSONSegment(1)
-		return TOKEN_LEFT_BRACE, tokenSynbol
+		return TOKEN_LEFT_BRACE, tokenSymbol
 	case TOKEN_RIGHT_BRACE_SYMBOL:
 		lexer.skipJSONSegment(1)
-		return TOKEN_RIGHT_BRACE, tokenSynbol
+		return TOKEN_RIGHT_BRACE, tokenSymbol
 	case TOKEN_COLON_SYMBOL:
 		lexer.skipJSONSegment(1)
-		return TOKEN_COLON, tokenSynbol
+		return TOKEN_COLON, tokenSymbol
 	case TOKEN_DOT_SYMBOL:
 		lexer.skipJSONSegment(1)
-		return TOKEN_DOT, tokenSynbol
+		return TOKEN_DOT, tokenSymbol
 	case TOKEN_COMMA_SYMBOL:
 		lexer.skipJSONSegment(1)
-		return TOKEN_COMMA, tokenSynbol
+		return TOKEN_COMMA, tokenSymbol
 	case TOKEN_QUOTE_SYMBOL:
 		lexer.skipJSONSegment(1)
-		return TOKEN_QUOTE, tokenSynbol
+		return TOKEN_QUOTE, tokenSymbol
+	case TOKEN_ALPHABET_LOWERCASE_A_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_ALPHABET_LOWERCASE_A, tokenSymbol
+	case TOKEN_ALPHABET_LOWERCASE_E_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_ALPHABET_LOWERCASE_E, tokenSymbol
+	case TOKEN_ALPHABET_LOWERCASE_F_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_ALPHABET_LOWERCASE_F, tokenSymbol
+	case TOKEN_ALPHABET_LOWERCASE_L_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_ALPHABET_LOWERCASE_L, tokenSymbol
+	case TOKEN_ALPHABET_LOWERCASE_N_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_ALPHABET_LOWERCASE_N, tokenSymbol
+	case TOKEN_ALPHABET_LOWERCASE_R_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_ALPHABET_LOWERCASE_R, tokenSymbol
+	case TOKEN_ALPHABET_LOWERCASE_S_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_ALPHABET_LOWERCASE_S, tokenSymbol
+	case TOKEN_ALPHABET_LOWERCASE_T_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_ALPHABET_LOWERCASE_T, tokenSymbol
+	case TOKEN_ALPHABET_LOWERCASE_U_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_ALPHABET_LOWERCASE_U, tokenSymbol
 	default:
 		lexer.skipJSONSegment(1)
-		return TOKEN_OTHERS, tokenSynbol
+		return TOKEN_OTHERS, tokenSymbol
 	}
 }
 
@@ -327,6 +363,311 @@ func (lexer *Lexer) AppendString(str string) error {
 				// pop `:` from mirror stack
 				lexer.popMirrorTokenStack()
 			}
+		case TOKEN_ALPHABET_LOWERCASE_A:
+			lexer.JSONContent.WriteByte(tokenSymbol)
+			// in a string, just skip token
+			if lexer.streamStoppedInAString() {
+				continue
+			}
+			// check if `f` in token stack and `a`, `l`, `s`, `e in mirror stack
+			itIsPartOfTokenFalse := func() bool {
+
+				left := []int{
+					TOKEN_ALPHABET_LOWERCASE_F,
+				}
+				if !matchStack(lexer.TokenStack, left) {
+					return false
+				}
+				right := []int{
+					TOKEN_ALPHABET_LOWERCASE_E,
+					TOKEN_ALPHABET_LOWERCASE_S,
+					TOKEN_ALPHABET_LOWERCASE_L,
+					TOKEN_ALPHABET_LOWERCASE_A,
+				}
+				if !matchStack(lexer.MirrorTokenStack, right) {
+					return false
+				}
+				return true
+			}
+			if !itIsPartOfTokenFalse() {
+				continue
+			}
+			lexer.pushTokenStack(token)
+			lexer.popMirrorTokenStack()
+		case TOKEN_ALPHABET_LOWERCASE_E:
+			lexer.JSONContent.WriteByte(tokenSymbol)
+			// in a string, just skip token
+			if lexer.streamStoppedInAString() {
+				continue
+			}
+			// check if `f`, `a`, `l`, `s` in token stack and `e` in mirror stack
+			itIsPartOfTokenFalse := func() bool {
+				left := []int{
+					TOKEN_ALPHABET_LOWERCASE_F,
+					TOKEN_ALPHABET_LOWERCASE_A,
+					TOKEN_ALPHABET_LOWERCASE_L,
+					TOKEN_ALPHABET_LOWERCASE_S,
+				}
+				if !matchStack(lexer.TokenStack, left) {
+					return false
+				}
+				right := []int{
+					TOKEN_ALPHABET_LOWERCASE_E,
+				}
+				if !matchStack(lexer.MirrorTokenStack, right) {
+					return false
+				}
+				return true
+			}
+			// check if `t`, `r`, `u` in token stack and `e` in mirror stack
+			itIsPartOfTokenTrue := func() bool {
+				left := []int{
+					TOKEN_ALPHABET_LOWERCASE_T,
+					TOKEN_ALPHABET_LOWERCASE_R,
+					TOKEN_ALPHABET_LOWERCASE_U,
+				}
+				if !matchStack(lexer.TokenStack, left) {
+					return false
+				}
+				right := []int{
+					TOKEN_ALPHABET_LOWERCASE_E,
+				}
+				if !matchStack(lexer.MirrorTokenStack, right) {
+					return false
+				}
+				return true
+			}
+			if !itIsPartOfTokenFalse() && !itIsPartOfTokenTrue() {
+				continue
+			}
+			lexer.pushTokenStack(token)
+			lexer.popMirrorTokenStack()
+		case TOKEN_ALPHABET_LOWERCASE_F:
+			lexer.JSONContent.WriteByte(tokenSymbol)
+			// in a string, just skip token
+			if lexer.streamStoppedInAString() {
+				continue
+			}
+
+			lexer.pushTokenStack(token)
+			// pop `n`, `u`, `l`, `l`
+			lexer.popMirrorTokenStack()
+			lexer.popMirrorTokenStack()
+			lexer.popMirrorTokenStack()
+			lexer.popMirrorTokenStack()
+			// push `a`, `l`, `s`, `e`
+			lexer.pushMirrorTokenStack(TOKEN_ALPHABET_LOWERCASE_E)
+			lexer.pushMirrorTokenStack(TOKEN_ALPHABET_LOWERCASE_S)
+			lexer.pushMirrorTokenStack(TOKEN_ALPHABET_LOWERCASE_L)
+			lexer.pushMirrorTokenStack(TOKEN_ALPHABET_LOWERCASE_A)
+		case TOKEN_ALPHABET_LOWERCASE_L:
+			lexer.JSONContent.WriteByte(tokenSymbol)
+			// in a string, just skip token
+			if lexer.streamStoppedInAString() {
+				continue
+			}
+			// check if `f`, `a` in token stack and, `l`, `s`, `e` in mirror stack
+			itIsPartOfTokenFalse := func() bool {
+				left := []int{
+					TOKEN_ALPHABET_LOWERCASE_F,
+					TOKEN_ALPHABET_LOWERCASE_A,
+				}
+				if !matchStack(lexer.TokenStack, left) {
+					return false
+				}
+				right := []int{
+					TOKEN_ALPHABET_LOWERCASE_E,
+					TOKEN_ALPHABET_LOWERCASE_S,
+					TOKEN_ALPHABET_LOWERCASE_L,
+				}
+				if !matchStack(lexer.MirrorTokenStack, right) {
+					return false
+				}
+				return true
+			}
+			// check if `n`, `u` in token stack and `l`, `l` in mirror stack
+			itIsPartOfTokenNull1 := func() bool {
+				fmt.Printf("[]RUN itIsPartOfTokenNull1() !!!!!!!\n")
+
+				left := []int{
+					TOKEN_ALPHABET_LOWERCASE_N,
+					TOKEN_ALPHABET_LOWERCASE_U,
+				}
+				fmt.Printf("    lexer.TokenStack: %+v\n", lexer.TokenStack)
+				if !matchStack(lexer.TokenStack, left) {
+					fmt.Printf("left does not match !!!!!!!\n")
+
+					return false
+				}
+				right := []int{
+					TOKEN_ALPHABET_LOWERCASE_L,
+					TOKEN_ALPHABET_LOWERCASE_L,
+				}
+				if !matchStack(lexer.MirrorTokenStack, right) {
+					fmt.Printf("does not match !!!!!!!\n")
+					return false
+				}
+				fmt.Printf("match !!!!!!!\n")
+
+				return true
+			}
+			// check if `n`, `u`, `l` in token stack and `l` in mirror stack
+			itIsPartOfTokenNull2 := func() bool {
+				left := []int{
+					TOKEN_ALPHABET_LOWERCASE_N,
+					TOKEN_ALPHABET_LOWERCASE_U,
+					TOKEN_ALPHABET_LOWERCASE_L,
+				}
+				if !matchStack(lexer.TokenStack, left) {
+					return false
+				}
+				right := []int{
+					TOKEN_ALPHABET_LOWERCASE_L,
+				}
+				if !matchStack(lexer.MirrorTokenStack, right) {
+					return false
+				}
+				return true
+			}
+			if !itIsPartOfTokenFalse() && !itIsPartOfTokenNull1() && !itIsPartOfTokenNull2() {
+				continue
+			}
+			lexer.pushTokenStack(token)
+			lexer.popMirrorTokenStack()
+		case TOKEN_ALPHABET_LOWERCASE_N:
+			lexer.JSONContent.WriteByte(tokenSymbol)
+			// in a string, just skip token
+			if lexer.streamStoppedInAString() {
+				continue
+			}
+
+			lexer.pushTokenStack(token)
+			lexer.popMirrorTokenStack()
+		case TOKEN_ALPHABET_LOWERCASE_R:
+			lexer.JSONContent.WriteByte(tokenSymbol)
+			// in a string, just skip token
+			if lexer.streamStoppedInAString() {
+				continue
+			}
+			// check if `t` in token stack and `r`, `u`, `e in mirror stack
+			itIsPartOfTokenTrue := func() bool {
+
+				left := []int{
+					TOKEN_ALPHABET_LOWERCASE_T,
+				}
+				if !matchStack(lexer.TokenStack, left) {
+					return false
+				}
+				right := []int{
+					TOKEN_ALPHABET_LOWERCASE_E,
+					TOKEN_ALPHABET_LOWERCASE_U,
+					TOKEN_ALPHABET_LOWERCASE_R,
+				}
+				if !matchStack(lexer.MirrorTokenStack, right) {
+					return false
+				}
+				return true
+			}
+			if !itIsPartOfTokenTrue() {
+				continue
+			}
+			lexer.pushTokenStack(token)
+			lexer.popMirrorTokenStack()
+		case TOKEN_ALPHABET_LOWERCASE_S:
+			lexer.JSONContent.WriteByte(tokenSymbol)
+			// in a string, just skip token
+			if lexer.streamStoppedInAString() {
+				continue
+			}
+			// check if `f`, `a`, `l` in token stack and `s`, `e in mirror stack
+			itIsPartOfTokenFalse := func() bool {
+
+				left := []int{
+					TOKEN_ALPHABET_LOWERCASE_F,
+					TOKEN_ALPHABET_LOWERCASE_A,
+					TOKEN_ALPHABET_LOWERCASE_L,
+				}
+				if !matchStack(lexer.TokenStack, left) {
+					return false
+				}
+				right := []int{
+					TOKEN_ALPHABET_LOWERCASE_E,
+					TOKEN_ALPHABET_LOWERCASE_S,
+				}
+				if !matchStack(lexer.MirrorTokenStack, right) {
+					return false
+				}
+				return true
+			}
+			if !itIsPartOfTokenFalse() {
+				continue
+			}
+			lexer.pushTokenStack(token)
+			lexer.popMirrorTokenStack()
+		case TOKEN_ALPHABET_LOWERCASE_T:
+			lexer.JSONContent.WriteByte(tokenSymbol)
+			// in a string, just skip token
+			if lexer.streamStoppedInAString() {
+				continue
+			}
+
+			lexer.pushTokenStack(token)
+			// pop `n`, `u`, `l`, `l`
+			lexer.popMirrorTokenStack()
+			lexer.popMirrorTokenStack()
+			lexer.popMirrorTokenStack()
+			lexer.popMirrorTokenStack()
+			// push `r`, `u`, `e`
+			lexer.pushMirrorTokenStack(TOKEN_ALPHABET_LOWERCASE_E)
+			lexer.pushMirrorTokenStack(TOKEN_ALPHABET_LOWERCASE_U)
+			lexer.pushMirrorTokenStack(TOKEN_ALPHABET_LOWERCASE_R)
+		case TOKEN_ALPHABET_LOWERCASE_U:
+			lexer.JSONContent.WriteByte(tokenSymbol)
+			// in a string, just skip token
+			if lexer.streamStoppedInAString() {
+				continue
+			}
+			// check if `t`, `r` in token stack and, `u`, `e` in mirror stack
+			itIsPartOfTokenTrue := func() bool {
+				left := []int{
+					TOKEN_ALPHABET_LOWERCASE_T,
+					TOKEN_ALPHABET_LOWERCASE_R,
+				}
+				if !matchStack(lexer.TokenStack, left) {
+					return false
+				}
+				right := []int{
+					TOKEN_ALPHABET_LOWERCASE_E,
+					TOKEN_ALPHABET_LOWERCASE_U,
+				}
+				if !matchStack(lexer.MirrorTokenStack, right) {
+					return false
+				}
+				return true
+			}
+			// check if `n` in token stack and `u`, `l`, `l` in mirror stack
+			itIsPartOfTokenNull := func() bool {
+				left := []int{
+					TOKEN_ALPHABET_LOWERCASE_N,
+				}
+				if !matchStack(lexer.TokenStack, left) {
+					return false
+				}
+				right := []int{
+					TOKEN_ALPHABET_LOWERCASE_L,
+					TOKEN_ALPHABET_LOWERCASE_L,
+					TOKEN_ALPHABET_LOWERCASE_U,
+				}
+				if !matchStack(lexer.MirrorTokenStack, right) {
+					return false
+				}
+				return true
+			}
+			if !itIsPartOfTokenTrue() && !itIsPartOfTokenNull() {
+				continue
+			}
+			lexer.pushTokenStack(token)
+			lexer.popMirrorTokenStack()
 		default:
 			lexer.JSONContent.WriteByte(tokenSymbol)
 			if lexer.isLeftPairToken(token) {
