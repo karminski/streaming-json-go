@@ -29,6 +29,17 @@ const (
 	TOKEN_ALPHABET_LOWERCASE_S        // s
 	TOKEN_ALPHABET_LOWERCASE_T        // t
 	TOKEN_ALPHABET_LOWERCASE_U        // u
+	TOKEN_NUMBER                      // number
+	TOKEN_NUMBER_0                    // 0
+	TOKEN_NUMBER_1                    // 1
+	TOKEN_NUMBER_2                    // 2
+	TOKEN_NUMBER_3                    // 3
+	TOKEN_NUMBER_4                    // 4
+	TOKEN_NUMBER_5                    // 5
+	TOKEN_NUMBER_6                    // 6
+	TOKEN_NUMBER_7                    // 7
+	TOKEN_NUMBER_8                    // 8
+	TOKEN_NUMBER_9                    // 9
 	TOKEN_OTHERS                      // anything else in json
 )
 
@@ -52,6 +63,16 @@ const (
 	TOKEN_ALPHABET_LOWERCASE_S_SYMBOL = 's'
 	TOKEN_ALPHABET_LOWERCASE_T_SYMBOL = 't'
 	TOKEN_ALPHABET_LOWERCASE_U_SYMBOL = 'u'
+	TOKEN_NUMBER_0_SYMBOL             = '0'
+	TOKEN_NUMBER_1_SYMBOL             = '1'
+	TOKEN_NUMBER_2_SYMBOL             = '2'
+	TOKEN_NUMBER_3_SYMBOL             = '3'
+	TOKEN_NUMBER_4_SYMBOL             = '4'
+	TOKEN_NUMBER_5_SYMBOL             = '5'
+	TOKEN_NUMBER_6_SYMBOL             = '6'
+	TOKEN_NUMBER_7_SYMBOL             = '7'
+	TOKEN_NUMBER_8_SYMBOL             = '8'
+	TOKEN_NUMBER_9_SYMBOL             = '9'
 )
 
 var tokenNameMap = map[int]string{
@@ -77,6 +98,16 @@ var tokenNameMap = map[int]string{
 	TOKEN_ALPHABET_LOWERCASE_S: "s",
 	TOKEN_ALPHABET_LOWERCASE_T: "t",
 	TOKEN_ALPHABET_LOWERCASE_U: "u",
+	TOKEN_NUMBER_0:             "0",
+	TOKEN_NUMBER_1:             "1",
+	TOKEN_NUMBER_2:             "2",
+	TOKEN_NUMBER_3:             "3",
+	TOKEN_NUMBER_4:             "4",
+	TOKEN_NUMBER_5:             "5",
+	TOKEN_NUMBER_6:             "6",
+	TOKEN_NUMBER_7:             "7",
+	TOKEN_NUMBER_8:             "8",
+	TOKEN_NUMBER_9:             "9",
 }
 
 var leftPairTokens = map[int]bool{
@@ -236,6 +267,14 @@ func (lexer *Lexer) streamStoppedInAString() bool {
 	return lexer.getTopTokenOnStack() == TOKEN_QUOTE && lexer.getTopTokenOnMirrorStack() == TOKEN_QUOTE
 }
 
+func (lexer *Lexer) streamStoppedInANumber() bool {
+	return lexer.getTopTokenOnStack() == TOKEN_NUMBER
+}
+
+func (lexer *Lexer) streamStoppedInANumberDecimalPart() bool {
+	return lexer.getTopTokenOnStack() == TOKEN_DOT
+}
+
 func (lexer *Lexer) streamStoppedWithLeadingComma() bool {
 	return lexer.getTopTokenOnStack() == TOKEN_COMMA
 }
@@ -306,6 +345,36 @@ func (lexer *Lexer) matchToken() (int, byte) {
 	case TOKEN_ALPHABET_LOWERCASE_U_SYMBOL:
 		lexer.skipJSONSegment(1)
 		return TOKEN_ALPHABET_LOWERCASE_U, tokenSymbol
+	case TOKEN_NUMBER_0_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_NUMBER_0, tokenSymbol
+	case TOKEN_NUMBER_1_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_NUMBER_1, tokenSymbol
+	case TOKEN_NUMBER_2_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_NUMBER_2, tokenSymbol
+	case TOKEN_NUMBER_3_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_NUMBER_3, tokenSymbol
+	case TOKEN_NUMBER_4_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_NUMBER_4, tokenSymbol
+	case TOKEN_NUMBER_5_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_NUMBER_5, tokenSymbol
+	case TOKEN_NUMBER_6_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_NUMBER_6, tokenSymbol
+	case TOKEN_NUMBER_7_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_NUMBER_7, tokenSymbol
+	case TOKEN_NUMBER_8_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_NUMBER_8, tokenSymbol
+	case TOKEN_NUMBER_9_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_NUMBER_9, tokenSymbol
 	default:
 		lexer.skipJSONSegment(1)
 		return TOKEN_OTHERS, tokenSymbol
@@ -327,7 +396,7 @@ func (lexer *Lexer) AppendString(str string) error {
 			fmt.Printf("    case TOKEN_QUOTE:\n")
 			fmt.Printf("    lexer.streamStoppedInAnObject():%+v\n", lexer.streamStoppedInAnObject())
 			fmt.Printf("    lexer.getTopTokenOnMirrorStack():%+v\n", lexer.getTopTokenOnMirrorStack())
-			// check if json stream stoped with leading comma
+			// check if json stream stopped with leading comma
 			if lexer.streamStoppedWithLeadingComma() {
 				lexer.pushCommaIntoJSONContent()
 			}
@@ -455,7 +524,7 @@ func (lexer *Lexer) AppendString(str string) error {
 			lexer.pushTokenStack(token)
 			lexer.popMirrorTokenStack()
 		case TOKEN_ALPHABET_LOWERCASE_F:
-			// check if json stream stoped with leading comma
+			// check if json stream stopped with leading comma
 			if lexer.streamStoppedWithLeadingComma() {
 				lexer.pushCommaIntoJSONContent()
 			}
@@ -552,7 +621,7 @@ func (lexer *Lexer) AppendString(str string) error {
 			lexer.pushTokenStack(token)
 			lexer.popMirrorTokenStack()
 		case TOKEN_ALPHABET_LOWERCASE_N:
-			// check if json stream stoped with leading comma
+			// check if json stream stopped with leading comma
 			if lexer.streamStoppedWithLeadingComma() {
 				lexer.pushCommaIntoJSONContent()
 			}
@@ -627,7 +696,7 @@ func (lexer *Lexer) AppendString(str string) error {
 			lexer.pushTokenStack(token)
 			lexer.popMirrorTokenStack()
 		case TOKEN_ALPHABET_LOWERCASE_T:
-			// check if json stream stoped with leading comma
+			// check if json stream stopped with leading comma
 			if lexer.streamStoppedWithLeadingComma() {
 				lexer.pushCommaIntoJSONContent()
 			}
@@ -695,6 +764,44 @@ func (lexer *Lexer) AppendString(str string) error {
 			}
 			lexer.pushTokenStack(token)
 			lexer.popMirrorTokenStack()
+		case TOKEN_NUMBER_0:
+			fallthrough
+		case TOKEN_NUMBER_1:
+			fallthrough
+		case TOKEN_NUMBER_2:
+			fallthrough
+		case TOKEN_NUMBER_3:
+			fallthrough
+		case TOKEN_NUMBER_4:
+			fallthrough
+		case TOKEN_NUMBER_5:
+			fallthrough
+		case TOKEN_NUMBER_6:
+			fallthrough
+		case TOKEN_NUMBER_7:
+			fallthrough
+		case TOKEN_NUMBER_8:
+			fallthrough
+		case TOKEN_NUMBER_9:
+			lexer.JSONContent.WriteByte(tokenSymbol)
+			// in a string or a number, just skip token
+			if lexer.streamStoppedInAString() || lexer.streamStoppedInANumber() {
+				continue
+			}
+			// in decimal part of a number
+			if lexer.streamStoppedInANumberDecimalPart() {
+				lexer.pushTokenStack(TOKEN_NUMBER)
+				// pop placeholder `0` in decimal part
+				lexer.popMirrorTokenStack()
+				continue
+			}
+			// first number token, push token into stack
+			lexer.pushTokenStack(TOKEN_NUMBER)
+			// pop `n`, `u`, `l`, `l`
+			lexer.popMirrorTokenStack()
+			lexer.popMirrorTokenStack()
+			lexer.popMirrorTokenStack()
+			lexer.popMirrorTokenStack()
 		case TOKEN_COMMA:
 			// in a string, just skip token
 			if lexer.streamStoppedInAString() {
@@ -704,7 +811,15 @@ func (lexer *Lexer) AppendString(str string) error {
 			// in a object or a array, keep the comma in stack but not write it into JSONContent, until next token arrival
 			// the comma must following with token: quote, null, true, false, number
 			lexer.pushTokenStack(token)
-
+		case TOKEN_DOT:
+			// in a string, just skip token
+			lexer.JSONContent.WriteByte(tokenSymbol)
+			if lexer.streamStoppedInAString() {
+				continue
+			}
+			// use 0 for decimal part place holder
+			lexer.pushTokenStack(token)
+			lexer.pushMirrorTokenStack(TOKEN_NUMBER_0)
 		default:
 			lexer.JSONContent.WriteByte(tokenSymbol)
 			if lexer.isLeftPairToken(token) {

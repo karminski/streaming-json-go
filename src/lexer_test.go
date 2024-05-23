@@ -44,14 +44,14 @@ func TestCompleteJSON(t *testing.T) {
 		// `{"a":fals`:   `{"a":false}`,
 		// `{"a":false`:  `{"a":false}`,
 		// `{"a":false,`: `{"a":false}`, // can not detect context, remove ","
-		`{"a":12`: `{"a":12}`,
-		//`{"a":12,`:       `{"a":12}`, // can not detect context, remove ","
-		//`{"a":12.`:       `{"a":12.0}`,
-		//`{"a":12.15`:     `{"a":12.15}`,
-		//`{"a":12.15,`:    `{"a":12.15}`, // can not detect context, remove ","
-		//`{"a":"`:         `{"a":""}`,
-		//`{"a":""`:        `{"a":""}`,
-		//`{"a":"",`:       `{"a":""}`, // can not detect context, remove ","
+		// `{"a":12`:     `{"a":12}`,
+		// `{"a":12,`:    `{"a":12}`, // can not detect context, remove ","
+		// `{"a":12.`:    `{"a":12.0}`,
+		// `{"a":12.15`:  `{"a":12.15}`,
+		// `{"a":12.15,`: `{"a":12.15}`, // can not detect context, remove ","
+		`{"a":"`:   `{"a":""}`,
+		`{"a":""`:  `{"a":""}`,
+		`{"a":"",`: `{"a":""}`, // can not detect context, remove ","
 		//`{"a":"string`:   `{"a":"string"}`,
 		//`{"a":"string"`:  `{"a":"string"}`,
 		//`{"a":"string",`: `{"a":"string"}`, // can not detect context, remove ","
