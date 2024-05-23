@@ -236,6 +236,14 @@ func (lexer *Lexer) streamStoppedInAString() bool {
 	return lexer.getTopTokenOnStack() == TOKEN_QUOTE && lexer.getTopTokenOnMirrorStack() == TOKEN_QUOTE
 }
 
+func (lexer *Lexer) streamStoppedWithLeadingComma() bool {
+	return lexer.getTopTokenOnStack() == TOKEN_COMMA
+}
+
+func (lexer *Lexer) pushCommaIntoJSONContent() {
+	lexer.JSONContent.WriteByte(TOKEN_COMMA_SYMBOL)
+}
+
 func (lexer *Lexer) matchToken() (int, byte) {
 	// finish
 	fmt.Printf("[DUMP] len(lexer.JSONSegment): %d\n", len(lexer.JSONSegment))
@@ -319,7 +327,11 @@ func (lexer *Lexer) AppendString(str string) error {
 			fmt.Printf("    case TOKEN_QUOTE:\n")
 			fmt.Printf("    lexer.streamStoppedInAnObject():%+v\n", lexer.streamStoppedInAnObject())
 			fmt.Printf("    lexer.getTopTokenOnMirrorStack():%+v\n", lexer.getTopTokenOnMirrorStack())
-
+			// check if json stream stoped with leading comma
+			if lexer.streamStoppedWithLeadingComma() {
+				lexer.pushCommaIntoJSONContent()
+			}
+			// start process
 			lexer.JSONContent.WriteByte(tokenSymbol)
 			lexer.pushTokenStack(token)
 			if lexer.streamStoppedInAnObject() {
@@ -443,6 +455,11 @@ func (lexer *Lexer) AppendString(str string) error {
 			lexer.pushTokenStack(token)
 			lexer.popMirrorTokenStack()
 		case TOKEN_ALPHABET_LOWERCASE_F:
+			// check if json stream stoped with leading comma
+			if lexer.streamStoppedWithLeadingComma() {
+				lexer.pushCommaIntoJSONContent()
+			}
+
 			lexer.JSONContent.WriteByte(tokenSymbol)
 			// in a string, just skip token
 			if lexer.streamStoppedInAString() {
@@ -535,6 +552,11 @@ func (lexer *Lexer) AppendString(str string) error {
 			lexer.pushTokenStack(token)
 			lexer.popMirrorTokenStack()
 		case TOKEN_ALPHABET_LOWERCASE_N:
+			// check if json stream stoped with leading comma
+			if lexer.streamStoppedWithLeadingComma() {
+				lexer.pushCommaIntoJSONContent()
+			}
+
 			lexer.JSONContent.WriteByte(tokenSymbol)
 			// in a string, just skip token
 			if lexer.streamStoppedInAString() {
@@ -605,6 +627,11 @@ func (lexer *Lexer) AppendString(str string) error {
 			lexer.pushTokenStack(token)
 			lexer.popMirrorTokenStack()
 		case TOKEN_ALPHABET_LOWERCASE_T:
+			// check if json stream stoped with leading comma
+			if lexer.streamStoppedWithLeadingComma() {
+				lexer.pushCommaIntoJSONContent()
+			}
+
 			lexer.JSONContent.WriteByte(tokenSymbol)
 			// in a string, just skip token
 			if lexer.streamStoppedInAString() {
@@ -668,6 +695,16 @@ func (lexer *Lexer) AppendString(str string) error {
 			}
 			lexer.pushTokenStack(token)
 			lexer.popMirrorTokenStack()
+		case TOKEN_COMMA:
+			// in a string, just skip token
+			if lexer.streamStoppedInAString() {
+				lexer.JSONContent.WriteByte(tokenSymbol)
+				continue
+			}
+			// in a object or a array, keep the comma in stack but not write it into JSONContent, until next token arrival
+			// the comma must following with token: quote, null, true, false, number
+			lexer.pushTokenStack(token)
+
 		default:
 			lexer.JSONContent.WriteByte(tokenSymbol)
 			if lexer.isLeftPairToken(token) {
