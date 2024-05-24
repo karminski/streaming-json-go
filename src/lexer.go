@@ -203,36 +203,25 @@ func (lexer *Lexer) skipJSONSegment(n int) {
 	lexer.JSONSegment = lexer.JSONSegment[n:]
 }
 
-func (lexer *Lexer) streamStoppedInAnObject() bool {
-	fmt.Printf("[DUMP] streamStoppedInAnObject.MirrorTokenStack: '%+v'\n", lexer.MirrorTokenStack)
-	// only "}" left
-	if lexer.getTopTokenOnMirrorStack() == TOKEN_RIGHT_BRACE {
-		return true
-	}
-
-	// ":", "null", "}" left
+func (lexer *Lexer) streamStoppedInAnObjectStart() bool {
+	// `,`, `}` left
 	case1 := []int{
 		TOKEN_RIGHT_BRACE,
-		TOKEN_ALPHABET_LOWERCASE_L,
-		TOKEN_ALPHABET_LOWERCASE_L,
-		TOKEN_ALPHABET_LOWERCASE_U,
-		TOKEN_ALPHABET_LOWERCASE_N,
-		TOKEN_COLON,
+		TOKEN_COMMA,
 	}
 	if matchStack(lexer.MirrorTokenStack, case1) {
 		return true
 	}
-	// "null", "}" left
-	case2 := []int{
-		TOKEN_RIGHT_BRACE,
-		TOKEN_ALPHABET_LOWERCASE_L,
-		TOKEN_ALPHABET_LOWERCASE_L,
-		TOKEN_ALPHABET_LOWERCASE_U,
-		TOKEN_ALPHABET_LOWERCASE_N,
-	}
-	if matchStack(lexer.MirrorTokenStack, case2) {
+
+	return false
+}
+
+func (lexer *Lexer) streamStoppedInAnObjectEnd() bool {
+	// only `}` left
+	if lexer.getTopTokenOnMirrorStack() == TOKEN_RIGHT_BRACE {
 		return true
 	}
+
 	return false
 }
 
@@ -252,6 +241,21 @@ func (lexer *Lexer) streamStoppedInAnObjectKey() bool {
 
 // check if JSON stream stopped in an object properity's value, like `{"field": "value`
 func (lexer *Lexer) streamStoppedInAnObjectValue() bool {
+	// `:`, `n`, `u`, `l`, `l`, `}` left
+	tokens := []int{
+		TOKEN_RIGHT_BRACE,
+		TOKEN_ALPHABET_LOWERCASE_L,
+		TOKEN_ALPHABET_LOWERCASE_L,
+		TOKEN_ALPHABET_LOWERCASE_U,
+		TOKEN_ALPHABET_LOWERCASE_N,
+		TOKEN_COLON,
+	}
+	return matchStack(lexer.MirrorTokenStack, tokens)
+}
+
+// check if JSON stream stopped in an object properity's value finish, like `{"field": "value"`
+func (lexer *Lexer) streamStoppedInAnObjectValueFinish() bool {
+	// `"`, `}` left
 	tokens := []int{
 		TOKEN_RIGHT_BRACE,
 		TOKEN_QUOTE,
@@ -385,7 +389,9 @@ func (lexer *Lexer) AppendString(str string) error {
 	lexer.JSONSegment = str
 	for {
 		token, tokenSymbol := lexer.matchToken()
-		fmt.Printf("[DUMP] AppendString.token: %s\n", tokenNameMap[token])
+		fmt.Printf("\n\n[DUMP] AppendString.token: `%s`\n", tokenNameMap[token])
+		fmt.Printf("       lexer.TokenStack: `%+v`\n", lexer.TokenStack)
+		fmt.Printf("       lexer.MirrorTokenStack: `%+v`\n", lexer.MirrorTokenStack)
 
 		switch token {
 		case TOKEN_EOF:
@@ -394,8 +400,6 @@ func (lexer *Lexer) AppendString(str string) error {
 			lexer.JSONContent.WriteByte(tokenSymbol)
 		case TOKEN_QUOTE:
 			fmt.Printf("    case TOKEN_QUOTE:\n")
-			fmt.Printf("    lexer.streamStoppedInAnObject():%+v\n", lexer.streamStoppedInAnObject())
-			fmt.Printf("    lexer.getTopTokenOnMirrorStack():%+v\n", lexer.getTopTokenOnMirrorStack())
 			// check if json stream stopped with leading comma
 			if lexer.streamStoppedWithLeadingComma() {
 				lexer.pushCommaIntoJSONContent()
@@ -403,8 +407,10 @@ func (lexer *Lexer) AppendString(str string) error {
 			// start process
 			lexer.JSONContent.WriteByte(tokenSymbol)
 			lexer.pushTokenStack(token)
-			if lexer.streamStoppedInAnObject() {
-				fmt.Printf("    lexer.streamStoppedInAnObject()\n")
+			if lexer.streamStoppedInAnObjectStart() {
+				// case for new object properity key quote coming
+				fmt.Printf("    lexer.streamStoppedInAnObjectStart()\n")
+
 				// push `null`, `:`, `"` into mirror stack
 				lexer.pushMirrorTokenStack(TOKEN_ALPHABET_LOWERCASE_L)
 				lexer.pushMirrorTokenStack(TOKEN_ALPHABET_LOWERCASE_L)
@@ -417,33 +423,42 @@ func (lexer *Lexer) AppendString(str string) error {
 
 				// push `"` into mirror stack
 				lexer.pushMirrorTokenStack(TOKEN_QUOTE)
-			} else if lexer.streamStoppedInAString() {
-				fmt.Printf("    lexer.streamStoppedInAString()\n")
-
+			} else if lexer.streamStoppedInAnObjectKey() {
 				// check if stopped in key of object's properity or value of object's properity
-				if lexer.streamStoppedInAnObjectKey() {
-					fmt.Printf("    lexer.streamStoppedInAnObjectKey()\n")
+				fmt.Printf("    lexer.streamStoppedInAnObjectKey()\n")
 
-					// pop `"` from mirror stack
-					lexer.popMirrorTokenStack()
-				} else if lexer.streamStoppedInAnObjectValue() {
-					fmt.Printf("    lexer.streamStoppedInAnObjectValue()\n")
+				// pop `"` from mirror stack
+				lexer.popMirrorTokenStack()
+			} else if lexer.streamStoppedInAnObjectValue() {
+				fmt.Printf("    lexer.streamStoppedInAnObjectValue()\n")
 
-					// pop `"` from mirror stack
-					lexer.popMirrorTokenStack()
-				} else {
-					return fmt.Errorf("invalied quote token in json stream, incompleted object properity")
-				}
+				// pop `:`, `n`, `u`, `l`, `l` from mirror stack
+				lexer.popMirrorTokenStack()
+				lexer.popMirrorTokenStack()
+				lexer.popMirrorTokenStack()
+				lexer.popMirrorTokenStack()
+				lexer.popMirrorTokenStack()
+				// push `"` into mirror stack
+				lexer.pushMirrorTokenStack(TOKEN_QUOTE)
+			} else if lexer.streamStoppedInAnObjectValueFinish() {
+				fmt.Printf("    lexer.streamStoppedInAnObjectValueFinish()\n")
+
+				// pop `"` from mirror stack
+				lexer.popMirrorTokenStack()
+			} else if lexer.streamStoppedInAnObjectEnd() {
+				fmt.Printf("    lexer.streamStoppedInAnObjectEnd()\n")
+
 			} else {
 				return fmt.Errorf("invalied quote token in json stream")
 			}
 		case TOKEN_COLON:
 			lexer.JSONContent.WriteByte(tokenSymbol)
-			lexer.pushTokenStack(token)
-			if lexer.streamStoppedInAnObject() {
-				// pop `:` from mirror stack
-				lexer.popMirrorTokenStack()
+			if lexer.streamStoppedInAString() {
+				continue
 			}
+			lexer.pushTokenStack(token)
+			// pop `:` from mirror stack
+			lexer.popMirrorTokenStack()
 		case TOKEN_ALPHABET_LOWERCASE_A:
 			lexer.JSONContent.WriteByte(tokenSymbol)
 			// in a string, just skip token
@@ -837,20 +852,6 @@ func (lexer *Lexer) AppendString(str string) error {
 		}
 	}
 	return nil
-}
-
-// complete missing parts for incomplete number, properity of object, null and boolean.
-func (lexer *Lexer) completeMissingParts() string {
-	// check if "," or ":" symbol on top of lexer.TokenStack
-	if lexer.streamStoppedInAnObject() {
-		switch lexer.getTopTokenOnStack() {
-		case TOKEN_DOT:
-			return `0`
-		case TOKEN_COLON:
-			return `: null`
-		}
-	}
-	return ""
 }
 
 func (lexer *Lexer) CompleteJSON() string {

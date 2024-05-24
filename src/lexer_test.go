@@ -27,7 +27,7 @@ func TestCompleteJSON(t *testing.T) {
 		// `{""`:         `{"":null}`,
 		// `{"a`:         `{"a":null}`,
 		// `{"a"`:        `{"a":null}`,
-		// `{"a":`:       `{"a":null}`,
+		// `{"a":`: `{"a":null}`,
 		// `{"a":n`:      `{"a":null}`,
 		// `{"a":nu`:     `{"a":null}`,
 		// `{"a":nul`:    `{"a":null}`,
@@ -49,12 +49,19 @@ func TestCompleteJSON(t *testing.T) {
 		// `{"a":12.`:    `{"a":12.0}`,
 		// `{"a":12.15`:  `{"a":12.15}`,
 		// `{"a":12.15,`: `{"a":12.15}`, // can not detect context, remove ","
-		`{"a":"`:   `{"a":""}`,
-		`{"a":""`:  `{"a":""}`,
-		`{"a":"",`: `{"a":""}`, // can not detect context, remove ","
-		//`{"a":"string`:   `{"a":"string"}`,
-		//`{"a":"string"`:  `{"a":"string"}`,
-		//`{"a":"string",`: `{"a":"string"}`, // can not detect context, remove ","
+		`{"a":"`: `{"a":""}`,
+		// `{"a":""`: `{"a":""}`,
+		// `{"a":"",`: `{"a":""}`, // can not detect context, remove ","
+		// `{"a":"string`: `{"a":"string"}`,
+		// `{"a":"string"`: `{"a":"string"}`,
+		// `{"a":"string",`: `{"a":"string"}`, // can not detect context, remove ","
+		// `{"a":"","`:       `{"a":"","":null}`,
+		// `{"a":"","b`:      `{"a":"","b":null}`,
+		// `{"a":"","b"`:     `{"a":"","b":null}`,
+		// `{"a":"","b":`:    `{"a":"","b":null}`,
+		// `{"a":"","b":"`:   `{"a":"","b":""}`,
+		// `{"a":"","b":""`: `{"a":"","b":""}`,
+		// `{"a":"","b":""}`: `{"a":"","b":""}`,
 		//`[`:               `[]`,
 		//`[]`:              `[]`,
 		//`[n`:              `[null]`,
