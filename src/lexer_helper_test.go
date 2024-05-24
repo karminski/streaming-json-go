@@ -6,7 +6,20 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_matchStack(t *testing.T) {
+func Test_matchStack0(t *testing.T) {
+	stack := []int{
+		TOKEN_LEFT_BRACE,
+	}
+	tokens := []int{
+		TOKEN_LEFT_BRACE,
+	}
+
+	matchResult := matchStack(stack, tokens)
+
+	assert.Equal(t, true, matchResult, "the tokens should be match")
+}
+
+func Test_matchStack1(t *testing.T) {
 	stack := []int{
 		TOKEN_RIGHT_BRACE,
 		TOKEN_ALPHABET_LOWERCASE_L,

@@ -225,6 +225,23 @@ func (lexer *Lexer) streamStoppedInAnObjectEnd() bool {
 	return false
 }
 
+func (lexer *Lexer) streamStoppedInAnObjectKeyStart() bool {
+	// `{`, `"` in stack, or `,`, `"` in stack
+	case1 := []int{
+		TOKEN_LEFT_BRACE,
+		TOKEN_QUOTE,
+	}
+	case2 := []int{
+		TOKEN_COMMA,
+		TOKEN_QUOTE,
+	}
+	// `}` in mirror stack
+	case3 := []int{
+		TOKEN_RIGHT_BRACE,
+	}
+	return (matchStack(lexer.TokenStack, case1) || matchStack(lexer.TokenStack, case2)) && matchStack(lexer.MirrorTokenStack, case3)
+}
+
 // check if JSON stream stopped in an object properity's key, like `{"field`
 func (lexer *Lexer) streamStoppedInAnObjectKey() bool {
 	tokens := []int{
@@ -411,7 +428,7 @@ func (lexer *Lexer) AppendString(str string) error {
 				// case for new object properity key quote coming
 				fmt.Printf("    lexer.streamStoppedInAnObjectStart()\n")
 
-				// push `null`, `:`, `"` into mirror stack
+				// push `"`, `:`, `n`, `u`, `l`, `l` into mirror stack
 				lexer.pushMirrorTokenStack(TOKEN_ALPHABET_LOWERCASE_L)
 				lexer.pushMirrorTokenStack(TOKEN_ALPHABET_LOWERCASE_L)
 				lexer.pushMirrorTokenStack(TOKEN_ALPHABET_LOWERCASE_U)
@@ -422,6 +439,17 @@ func (lexer *Lexer) AppendString(str string) error {
 				fmt.Printf("    lexer.streamStoppedInAnArray()\n")
 
 				// push `"` into mirror stack
+				lexer.pushMirrorTokenStack(TOKEN_QUOTE)
+			} else if lexer.streamStoppedInAnObjectKeyStart() {
+				// check if stopped in key of object's properity or value of object's properity
+				fmt.Printf("    lexer.streamStoppedInAnObjectKeyStart()\n")
+
+				// push `"`, `:`, `n`, `u`, `l`, `l` into mirror stack
+				lexer.pushMirrorTokenStack(TOKEN_ALPHABET_LOWERCASE_L)
+				lexer.pushMirrorTokenStack(TOKEN_ALPHABET_LOWERCASE_L)
+				lexer.pushMirrorTokenStack(TOKEN_ALPHABET_LOWERCASE_U)
+				lexer.pushMirrorTokenStack(TOKEN_ALPHABET_LOWERCASE_N)
+				lexer.pushMirrorTokenStack(TOKEN_COLON)
 				lexer.pushMirrorTokenStack(TOKEN_QUOTE)
 			} else if lexer.streamStoppedInAnObjectKey() {
 				// check if stopped in key of object's properity or value of object's properity
@@ -445,9 +473,6 @@ func (lexer *Lexer) AppendString(str string) error {
 
 				// pop `"` from mirror stack
 				lexer.popMirrorTokenStack()
-			} else if lexer.streamStoppedInAnObjectEnd() {
-				fmt.Printf("    lexer.streamStoppedInAnObjectEnd()\n")
-
 			} else {
 				return fmt.Errorf("invalied quote token in json stream")
 			}

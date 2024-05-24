@@ -21,46 +21,46 @@ import (
 
 func TestCompleteJSON(t *testing.T) {
 	streamingJSONCase := map[string]string{
-		// `{`:           `{}`,
-		// `{}`:          `{}`,
-		// `{"`:          `{"":null}`,
-		// `{""`:         `{"":null}`,
-		// `{"a`:         `{"a":null}`,
-		// `{"a"`:        `{"a":null}`,
-		// `{"a":`: `{"a":null}`,
-		// `{"a":n`:      `{"a":null}`,
-		// `{"a":nu`:     `{"a":null}`,
-		// `{"a":nul`:    `{"a":null}`,
-		// `{"a":null`:   `{"a":null}`,
-		// `{"a":null,`:  `{"a":null}`, // can not detect context, remove ","
-		// `{"a":t`:      `{"a":true}`,
-		// `{"a":tr`:     `{"a":true}`,
-		// `{"a":tru`:    `{"a":true}`,
-		// `{"a":true`:   `{"a":true}`,
-		// `{"a":true,`:  `{"a":true}`, // can not detect context, remove ","
-		// `{"a":f`:      `{"a":false}`,
-		// `{"a":fa`:     `{"a":false}`,
-		// `{"a":fal`:    `{"a":false}`,
-		// `{"a":fals`:   `{"a":false}`,
-		// `{"a":false`:  `{"a":false}`,
-		// `{"a":false,`: `{"a":false}`, // can not detect context, remove ","
-		// `{"a":12`:     `{"a":12}`,
-		// `{"a":12,`:    `{"a":12}`, // can not detect context, remove ","
-		// `{"a":12.`:    `{"a":12.0}`,
-		// `{"a":12.15`:  `{"a":12.15}`,
-		// `{"a":12.15,`: `{"a":12.15}`, // can not detect context, remove ","
-		`{"a":"`: `{"a":""}`,
-		// `{"a":""`: `{"a":""}`,
-		// `{"a":"",`: `{"a":""}`, // can not detect context, remove ","
-		// `{"a":"string`: `{"a":"string"}`,
-		// `{"a":"string"`: `{"a":"string"}`,
-		// `{"a":"string",`: `{"a":"string"}`, // can not detect context, remove ","
+		// `{`:               `{}`,        // mirror stack: [], should remove from stack: [], should push into mirror stack: [`}`]
+		// `{}`:              `{}`,        // mirror stack: [], should remove from stack: [], should push into mirror stack: []
+		// `{"`:              `{"":null}`, // mirror stack: [`}`], should remove from stack: [], should push into mirror stack: [`"`, `:`, `n`, `u`, `l`, `l`]
+		// `{""`:             `{"":null}`, // mirror stack: [`"`, `:`, `n`, `u`, `l`, `l`,`}`], should remove from stack: [`"`], should push into mirror stack: []
+		// `{"a`:             `{"a":null}`,
+		// `{"a"`:            `{"a":null}`,
+		// `{"a":`:           `{"a":null}`,
+		// `{"a":n`:          `{"a":null}`,
+		// `{"a":nu`:         `{"a":null}`,
+		// `{"a":nul`:        `{"a":null}`,
+		// `{"a":null`:       `{"a":null}`,
+		// `{"a":null,`:      `{"a":null}`, // can not detect context, remove ","
+		// `{"a":t`:          `{"a":true}`,
+		// `{"a":tr`:         `{"a":true}`,
+		// `{"a":tru`:        `{"a":true}`,
+		// `{"a":true`:       `{"a":true}`,
+		// `{"a":true,`:      `{"a":true}`, // can not detect context, remove ","
+		// `{"a":f`:          `{"a":false}`,
+		// `{"a":fa`:         `{"a":false}`,
+		// `{"a":fal`:        `{"a":false}`,
+		// `{"a":fals`:       `{"a":false}`,
+		// `{"a":false`:      `{"a":false}`,
+		// `{"a":false,`:     `{"a":false}`, // can not detect context, remove ","
+		// `{"a":12`:         `{"a":12}`,
+		// `{"a":12,`:        `{"a":12}`, // can not detect context, remove ","
+		// `{"a":12.`:        `{"a":12.0}`,
+		// `{"a":12.15`:      `{"a":12.15}`,
+		// `{"a":12.15,`:     `{"a":12.15}`, // can not detect context, remove ","
+		// `{"a":"`:          `{"a":""}`,
+		// `{"a":""`:         `{"a":""}`,
+		// `{"a":"",`:        `{"a":""}`, // can not detect context, remove ","
+		// `{"a":"string`:    `{"a":"string"}`,
+		// `{"a":"string"`:   `{"a":"string"}`,
+		`{"a":"string",`: `{"a":"string"}`, // can not detect context, remove ","
 		// `{"a":"","`:       `{"a":"","":null}`,
 		// `{"a":"","b`:      `{"a":"","b":null}`,
 		// `{"a":"","b"`:     `{"a":"","b":null}`,
 		// `{"a":"","b":`:    `{"a":"","b":null}`,
 		// `{"a":"","b":"`:   `{"a":"","b":""}`,
-		// `{"a":"","b":""`: `{"a":"","b":""}`,
+		// `{"a":"","b":""`:  `{"a":"","b":""}`,
 		// `{"a":"","b":""}`: `{"a":"","b":""}`,
 		//`[`:               `[]`,
 		//`[]`:              `[]`,
