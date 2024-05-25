@@ -43,7 +43,7 @@ func TestCompleteJSON_base(t *testing.T) {
 		`{"a":"string`:   `{"a":"string"}`,
 		`{"a":"string"`:  `{"a":"string"}`,
 		`{"a":"string",`: `{"a":"string"}`,
-		// test case: escape character and token in string case
+		// test case: escape character
 		// `{"\`:                      `{"":null}`,
 		// `{"\"`:                      `{"\"":null}`,
 		// `{"\""`:                      `{"\"":null}`,
@@ -56,6 +56,16 @@ func TestCompleteJSON_base(t *testing.T) {
 		// `{"a":"\"\""`:                      `{"a":"\"\""}`,
 		// `{"a":"\"\"",`:                      `{"a":"\"\""}`,
 		// `{"a":"\"\""}`:                      `{"a":"\"\""}`,
+		// `{"\\:`:                      `{"\\":null}`,
+		// `{"\/:`:                      `{"\/":null}`,
+		// `{"\b:`:                      `{"\b":null}`,
+		// `{"\f:`:                      `{"\f":null}`,
+		// `{"\n:`:                      `{"\n":null}`,
+		// `{"\r:`:                      `{"\r":null}`,
+		// `{"\t:`:                      `{"\t":null}`,
+		// `{"\u0111:`:                      `{"\u0111":null}`,
+
+		// test case: token in string
 		`{"a":"["`:          `{"a":"["}`,
 		`{"a":"[]"`:         `{"a":"[]"}`,
 		`{"a":"]"`:          `{"a":"]"}`,
