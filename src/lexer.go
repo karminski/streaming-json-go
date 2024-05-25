@@ -366,8 +366,16 @@ func (lexer *Lexer) streamStoppedWithLeadingComma() bool {
 	return lexer.getTopTokenOnStack() == TOKEN_COMMA
 }
 
+func (lexer *Lexer) streamStoppedWithLeadingEscapeCharacter() bool {
+	return lexer.getTopTokenOnStack() == TOKEN_ESCAPE_CHARACTER
+}
+
 func (lexer *Lexer) pushCommaIntoJSONContent() {
 	lexer.JSONContent.WriteByte(TOKEN_COMMA_SYMBOL)
+}
+
+func (lexer *Lexer) pushEscapeCharacterIntoJSONContent() {
+	lexer.JSONContent.WriteByte(TOKEN_ESCAPE_CHARACTER_SYMBOL)
 }
 
 func (lexer *Lexer) matchToken() (int, byte) {
@@ -405,6 +413,9 @@ func (lexer *Lexer) matchToken() (int, byte) {
 	case TOKEN_QUOTE_SYMBOL:
 		lexer.skipJSONSegment(1)
 		return TOKEN_QUOTE, tokenSymbol
+	case TOKEN_ESCAPE_CHARACTER_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_ESCAPE_CHARACTER, tokenSymbol
 	case TOKEN_ALPHABET_LOWERCASE_A_SYMBOL:
 		lexer.skipJSONSegment(1)
 		return TOKEN_ALPHABET_LOWERCASE_A, tokenSymbol
@@ -480,6 +491,14 @@ func (lexer *Lexer) AppendString(str string) error {
 		case TOKEN_EOF:
 			// nothing to do with TOKEN_EOF
 		case TOKEN_OTHERS:
+			// double escape character `\`, `\`
+			if lexer.streamStoppedWithLeadingEscapeCharacter() {
+				lexer.pushEscapeCharacterIntoJSONContent()
+				lexer.JSONContent.WriteByte(tokenSymbol)
+				// pop `\` from  stack
+				lexer.popTokenStack()
+				continue
+			}
 			lexer.JSONContent.WriteByte(tokenSymbol)
 		case TOKEN_LEFT_BRACKET:
 			fmt.Printf("    case TOKEN_LEFT_BRACKET:\n")
@@ -550,6 +569,13 @@ func (lexer *Lexer) AppendString(str string) error {
 			// check if json stream stopped with leading comma
 			if lexer.streamStoppedWithLeadingComma() {
 				lexer.pushCommaIntoJSONContent()
+			}
+			if lexer.streamStoppedWithLeadingEscapeCharacter() {
+				lexer.pushEscapeCharacterIntoJSONContent()
+				lexer.JSONContent.WriteByte(tokenSymbol)
+				// pop `\` from  stack
+				lexer.popTokenStack()
+				continue
 			}
 			// start process
 			lexer.JSONContent.WriteByte(tokenSymbol)
@@ -704,6 +730,15 @@ func (lexer *Lexer) AppendString(str string) error {
 		case TOKEN_ALPHABET_LOWERCASE_F:
 			fmt.Printf("    case TOKEN_ALPHABET_LOWERCASE_F:\n")
 
+			// \f escape `\`, `f`
+			if lexer.streamStoppedWithLeadingEscapeCharacter() {
+				lexer.pushEscapeCharacterIntoJSONContent()
+				lexer.JSONContent.WriteByte(tokenSymbol)
+				// pop `\` from  stack
+				lexer.popTokenStack()
+				continue
+			}
+
 			// check if json stream stopped with leading comma
 			if lexer.streamStoppedWithLeadingComma() {
 				lexer.pushCommaIntoJSONContent()
@@ -815,6 +850,14 @@ func (lexer *Lexer) AppendString(str string) error {
 			lexer.popMirrorTokenStack()
 		case TOKEN_ALPHABET_LOWERCASE_N:
 			fmt.Printf("    case TOKEN_ALPHABET_LOWERCASE_N:\n")
+			// \n escape `\`, `n`
+			if lexer.streamStoppedWithLeadingEscapeCharacter() {
+				lexer.pushEscapeCharacterIntoJSONContent()
+				lexer.JSONContent.WriteByte(tokenSymbol)
+				// pop `\` from  stack
+				lexer.popTokenStack()
+				continue
+			}
 
 			// check if json stream stopped with leading comma
 			if lexer.streamStoppedWithLeadingComma() {
@@ -840,6 +883,14 @@ func (lexer *Lexer) AppendString(str string) error {
 			}
 		case TOKEN_ALPHABET_LOWERCASE_R:
 			fmt.Printf("    case TOKEN_ALPHABET_LOWERCASE_R:\n")
+			// \r escape `\`, `r`
+			if lexer.streamStoppedWithLeadingEscapeCharacter() {
+				lexer.pushEscapeCharacterIntoJSONContent()
+				lexer.JSONContent.WriteByte(tokenSymbol)
+				// pop `\` from  stack
+				lexer.popTokenStack()
+				continue
+			}
 
 			lexer.JSONContent.WriteByte(tokenSymbol)
 			// in a string, just skip token
@@ -906,6 +957,15 @@ func (lexer *Lexer) AppendString(str string) error {
 		case TOKEN_ALPHABET_LOWERCASE_T:
 			fmt.Printf("    case TOKEN_ALPHABET_LOWERCASE_T:\n")
 
+			// \t escape `\`, `t`
+			if lexer.streamStoppedWithLeadingEscapeCharacter() {
+				lexer.pushEscapeCharacterIntoJSONContent()
+				lexer.JSONContent.WriteByte(tokenSymbol)
+				// pop `\` from  stack
+				lexer.popTokenStack()
+				continue
+			}
+
 			// check if json stream stopped with leading comma
 			if lexer.streamStoppedWithLeadingComma() {
 				lexer.pushCommaIntoJSONContent()
@@ -939,12 +999,21 @@ func (lexer *Lexer) AppendString(str string) error {
 			}
 		case TOKEN_ALPHABET_LOWERCASE_U:
 			fmt.Printf("    case TOKEN_ALPHABET_LOWERCASE_U:\n")
+			// unicode escape `\`, `u`
+			if lexer.streamStoppedWithLeadingEscapeCharacter() {
+				lexer.pushEscapeCharacterIntoJSONContent()
+				lexer.JSONContent.WriteByte(tokenSymbol)
+				// pop `\` from  stack
+				lexer.popTokenStack()
+				continue
+			}
 
 			lexer.JSONContent.WriteByte(tokenSymbol)
 			// in a string, just skip token
 			if lexer.streamStoppedInAString() {
 				continue
 			}
+
 			// check if `t`, `r` in token stack and, `u`, `e` in mirror stack
 			itIsPartOfTokenTrue := func() bool {
 				left := []int{
@@ -1055,6 +1124,15 @@ func (lexer *Lexer) AppendString(str string) error {
 			lexer.pushTokenStack(token)
 			lexer.pushMirrorTokenStack(TOKEN_NUMBER_0)
 		case TOKEN_ESCAPE_CHARACTER:
+			fmt.Printf("    case TOKEN_ESCAPE_CHARACTER:\n")
+			// double escape character `\`, `\`
+			if lexer.streamStoppedWithLeadingEscapeCharacter() {
+				lexer.pushEscapeCharacterIntoJSONContent()
+				lexer.JSONContent.WriteByte(tokenSymbol)
+				// pop `\` from  stack
+				lexer.popTokenStack()
+				continue
+			}
 			// just write escape character into stack and waitting other token trigger escape method.
 			lexer.pushTokenStack(token)
 		default:
