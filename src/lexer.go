@@ -1054,6 +1054,9 @@ func (lexer *Lexer) AppendString(str string) error {
 			// use 0 for decimal part place holder
 			lexer.pushTokenStack(token)
 			lexer.pushMirrorTokenStack(TOKEN_NUMBER_0)
+		case TOKEN_ESCAPE_CHARACTER:
+			// just write escape character into stack and waitting other token trigger escape method.
+			lexer.pushTokenStack(token)
 		default:
 			return fmt.Errorf("unexpected token: `%d`, token symbol: `%c`", token, tokenSymbol)
 		}
