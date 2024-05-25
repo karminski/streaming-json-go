@@ -270,6 +270,24 @@ func (lexer *Lexer) streamStoppedInAnObjectValue() bool {
 	return matchStack(lexer.MirrorTokenStack, tokens)
 }
 
+// check if JSON stream stopped in an object properity's value start, like `{"field": "`
+func (lexer *Lexer) streamStoppedInAnObjectValueStart() bool {
+	// `:`, `"` in stack
+	case1 := []int{
+		TOKEN_COLON,
+		TOKEN_QUOTE,
+	}
+	// `n`, `u`, `l`, `l`, `}` in mirror stack
+	case2 := []int{
+		TOKEN_RIGHT_BRACE,
+		TOKEN_ALPHABET_LOWERCASE_L,
+		TOKEN_ALPHABET_LOWERCASE_L,
+		TOKEN_ALPHABET_LOWERCASE_U,
+		TOKEN_ALPHABET_LOWERCASE_N,
+	}
+	return matchStack(lexer.TokenStack, case1) && matchStack(lexer.MirrorTokenStack, case2)
+}
+
 // check if JSON stream stopped in an object properity's value finish, like `{"field": "value"`
 func (lexer *Lexer) streamStoppedInAnObjectValueFinish() bool {
 	// `"`, `}` left
@@ -457,6 +475,15 @@ func (lexer *Lexer) AppendString(str string) error {
 
 				// pop `"` from mirror stack
 				lexer.popMirrorTokenStack()
+			} else if lexer.streamStoppedInAnObjectValueStart() {
+				fmt.Printf("    lexer.streamStoppedInAnObjectValueStart()\n")
+				// pop `n`, `u`, `l`, `l` from mirror stack
+				lexer.popMirrorTokenStack()
+				lexer.popMirrorTokenStack()
+				lexer.popMirrorTokenStack()
+				lexer.popMirrorTokenStack()
+				// push `"` into mirror stack
+				lexer.pushMirrorTokenStack(TOKEN_QUOTE)
 			} else if lexer.streamStoppedInAnObjectValue() {
 				fmt.Printf("    lexer.streamStoppedInAnObjectValue()\n")
 

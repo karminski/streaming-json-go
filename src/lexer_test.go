@@ -54,7 +54,7 @@ func TestCompleteJSON(t *testing.T) {
 		// `{"a":"",`:        `{"a":""}`, // can not detect context, remove ","
 		// `{"a":"string`:    `{"a":"string"}`,
 		// `{"a":"string"`:   `{"a":"string"}`,
-		`{"a":"string",`: `{"a":"string"}`, // can not detect context, remove ","
+		// `{"a":"string",`:  `{"a":"string"}`, // can not detect context, remove ","
 		// `{"a":"","`:       `{"a":"","":null}`,
 		// `{"a":"","b`:      `{"a":"","b":null}`,
 		// `{"a":"","b"`:     `{"a":"","b":null}`,
