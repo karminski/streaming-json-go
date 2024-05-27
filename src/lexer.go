@@ -17,6 +17,7 @@ const (
 	TOKEN_COMMA                       // ,
 	TOKEN_QUOTE                       // "
 	TOKEN_ESCAPE_CHARACTER            // \
+	TOKEN_NEGATIVE                    // -
 	TOKEN_NULL                        // null
 	TOKEN_TRUE                        // true
 	TOKEN_FLASE                       // false
@@ -54,6 +55,7 @@ const (
 	TOKEN_COMMA_SYMBOL                = ','
 	TOKEN_QUOTE_SYMBOL                = '"'
 	TOKEN_ESCAPE_CHARACTER_SYMBOL     = '\\'
+	TOKEN_NEGATIVE_SYMBOL             = '-'
 	TOKEN_ALPHABET_LOWERCASE_A_SYMBOL = 'a'
 	TOKEN_ALPHABET_LOWERCASE_E_SYMBOL = 'e'
 	TOKEN_ALPHABET_LOWERCASE_F_SYMBOL = 'f'
@@ -86,6 +88,7 @@ var tokenNameMap = map[int]string{
 	TOKEN_COMMA:                ",",
 	TOKEN_QUOTE:                "\"",
 	TOKEN_ESCAPE_CHARACTER:     "\\",
+	TOKEN_NEGATIVE:             "-",
 	TOKEN_NULL:                 "null",
 	TOKEN_TRUE:                 "true",
 	TOKEN_FLASE:                "false",
@@ -269,7 +272,7 @@ func (lexer *Lexer) streamStoppedInAnObjectKeyEnd() bool {
 }
 
 // check if JSON stream stopped in an object properity's value start, like `{"field": "`
-func (lexer *Lexer) streamStoppedInAnObjectValueStart() bool {
+func (lexer *Lexer) streamStoppedInAnObjectStringValueStart() bool {
 	// `:`, `"` in stack
 	case1 := []int{
 		TOKEN_COLON,
@@ -332,6 +335,28 @@ func (lexer *Lexer) streamStoppedInAnObjectObjectValueStart() bool {
 	return matchStack(lexer.TokenStack, case1) && matchStack(lexer.MirrorTokenStack, case2)
 }
 
+func (lexer *Lexer) streamStoppedInAnObjectNegativeNumberValueStart() bool {
+	// `:`, `-` in stack
+	case1 := []int{
+		TOKEN_COLON,
+		TOKEN_NEGATIVE,
+	}
+
+	return matchStack(lexer.TokenStack, case1)
+}
+
+func (lexer *Lexer) streamStoppedInANegativeNumberValueStart() bool {
+	// `-` in stack
+	case1 := []int{
+		TOKEN_NEGATIVE,
+	}
+	// `0`in mirror stack
+	case2 := []int{
+		TOKEN_NUMBER_0,
+	}
+	return matchStack(lexer.TokenStack, case1) && matchStack(lexer.MirrorTokenStack, case2)
+}
+
 func (lexer *Lexer) streamStoppedInAnArray() bool {
 	return lexer.getTopTokenOnMirrorStack() == TOKEN_RIGHT_BRACKET
 }
@@ -348,6 +373,19 @@ func (lexer *Lexer) streamStoppedInAnArrayValueEnd() bool {
 		TOKEN_QUOTE,
 	}
 	return matchStack(lexer.TokenStack, case1) && matchStack(lexer.MirrorTokenStack, case2)
+}
+
+// check if JSON stream stopped in an object properity's value start by array, like `{"field":{`
+func (lexer *Lexer) streamStoppedInAnObjectNullValuePlaceholderStart() bool {
+	// `n`, `u`, `l`, `l`, `}` in mirror stack
+	case1 := []int{
+		TOKEN_RIGHT_BRACE,
+		TOKEN_ALPHABET_LOWERCASE_L,
+		TOKEN_ALPHABET_LOWERCASE_L,
+		TOKEN_ALPHABET_LOWERCASE_U,
+		TOKEN_ALPHABET_LOWERCASE_N,
+	}
+	return matchStack(lexer.MirrorTokenStack, case1)
 }
 
 func (lexer *Lexer) streamStoppedInAString() bool {
@@ -376,6 +414,10 @@ func (lexer *Lexer) pushCommaIntoJSONContent() {
 
 func (lexer *Lexer) pushEscapeCharacterIntoJSONContent() {
 	lexer.JSONContent.WriteByte(TOKEN_ESCAPE_CHARACTER_SYMBOL)
+}
+
+func (lexer *Lexer) pushNegativeIntoJSONContent() {
+	lexer.JSONContent.WriteByte(TOKEN_NEGATIVE_SYMBOL)
 }
 
 func (lexer *Lexer) matchToken() (int, byte) {
@@ -416,6 +458,9 @@ func (lexer *Lexer) matchToken() (int, byte) {
 	case TOKEN_ESCAPE_CHARACTER_SYMBOL:
 		lexer.skipJSONSegment(1)
 		return TOKEN_ESCAPE_CHARACTER, tokenSymbol
+	case TOKEN_NEGATIVE_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_NEGATIVE, tokenSymbol
 	case TOKEN_ALPHABET_LOWERCASE_A_SYMBOL:
 		lexer.skipJSONSegment(1)
 		return TOKEN_ALPHABET_LOWERCASE_A, tokenSymbol
@@ -491,6 +536,12 @@ func (lexer *Lexer) AppendString(str string) error {
 		case TOKEN_EOF:
 			// nothing to do with TOKEN_EOF
 		case TOKEN_OTHERS:
+			// check if json stream stopped with leading comma
+			if lexer.streamStoppedWithLeadingComma() {
+				lexer.pushCommaIntoJSONContent()
+				// pop `,` from  stack
+				lexer.popTokenStack()
+			}
 			// double escape character `\`, `\`
 			if lexer.streamStoppedWithLeadingEscapeCharacter() {
 				lexer.pushEscapeCharacterIntoJSONContent()
@@ -618,8 +669,8 @@ func (lexer *Lexer) AppendString(str string) error {
 
 				// pop `"` from mirror stack
 				lexer.popMirrorTokenStack()
-			} else if lexer.streamStoppedInAnObjectValueStart() {
-				fmt.Printf("    lexer.streamStoppedInAnObjectValueStart()\n")
+			} else if lexer.streamStoppedInAnObjectStringValueStart() {
+				fmt.Printf("    lexer.streamStoppedInAnObjectStringValueStart()\n")
 				// pop `n`, `u`, `l`, `l` from mirror stack
 				lexer.popMirrorTokenStack()
 				lexer.popMirrorTokenStack()
@@ -1081,11 +1132,19 @@ func (lexer *Lexer) AppendString(str string) error {
 				lexer.pushCommaIntoJSONContent()
 			}
 
+			// in negative part of a number
+			if lexer.streamStoppedInANegativeNumberValueStart() {
+				lexer.pushNegativeIntoJSONContent()
+				// pop `0` from mirror stack
+				lexer.popMirrorTokenStack()
+			}
+
 			lexer.JSONContent.WriteByte(tokenSymbol)
 			// in a string or a number, just skip token
 			if lexer.streamStoppedInAString() || lexer.streamStoppedInANumber() {
 				continue
 			}
+
 			// in decimal part of a number
 			if lexer.streamStoppedInANumberDecimalPart() {
 				lexer.pushTokenStack(TOKEN_NUMBER)
@@ -1093,11 +1152,12 @@ func (lexer *Lexer) AppendString(str string) error {
 				lexer.popMirrorTokenStack()
 				continue
 			}
+
 			// first number token, push token into stack
 			lexer.pushTokenStack(TOKEN_NUMBER)
 			if lexer.streamStoppedInAnArray() {
 				continue
-			} else {
+			} else if lexer.streamStoppedInAnObjectNullValuePlaceholderStart() {
 				// pop `n`, `u`, `l`, `l`
 				lexer.popMirrorTokenStack()
 				lexer.popMirrorTokenStack()
@@ -1135,6 +1195,31 @@ func (lexer *Lexer) AppendString(str string) error {
 			}
 			// just write escape character into stack and waitting other token trigger escape method.
 			lexer.pushTokenStack(token)
+		case TOKEN_NEGATIVE:
+			fmt.Printf("    case TOKEN_NEGATIVE:\n")
+
+			// in a string, just skip token
+			if lexer.streamStoppedInAString() {
+				lexer.JSONContent.WriteByte(tokenSymbol)
+				continue
+			}
+
+			// check if json stream stopped with leading comma
+			if lexer.streamStoppedWithLeadingComma() {
+				lexer.pushCommaIntoJSONContent()
+			}
+
+			// just write negative character into stack and waitting other token trigger it.
+			lexer.pushTokenStack(token)
+			if lexer.streamStoppedInAnObjectNegativeNumberValueStart() {
+				// pop `n`, `u`, `l`, `l` from mirror stack
+				lexer.popMirrorTokenStack()
+				lexer.popMirrorTokenStack()
+				lexer.popMirrorTokenStack()
+				lexer.popMirrorTokenStack()
+			}
+			// push `0` into mirror stack for placeholder
+			lexer.pushMirrorTokenStack(TOKEN_NUMBER_0)
 		default:
 			return fmt.Errorf("unexpected token: `%d`, token symbol: `%c`", token, tokenSymbol)
 		}
