@@ -8,6 +8,7 @@ import (
 // token const
 const (
 	TOKEN_EOF                  = iota // end-of-file
+	TOKEN_IGNORED                     // \t', '\n', '\v', '\f', '\r', ' '
 	TOKEN_LEFT_BRACKET                // [
 	TOKEN_RIGHT_BRACKET               // ]
 	TOKEN_LEFT_BRACE                  // {
@@ -429,6 +430,12 @@ func (lexer *Lexer) matchToken() (int, byte) {
 	}
 	tokenSymbol := lexer.JSONSegment[0]
 
+	// check if ignored token
+	if isIgnoreToken(tokenSymbol) {
+		lexer.skipJSONSegment(1)
+		return TOKEN_IGNORED, tokenSymbol
+	}
+
 	// check token
 	switch tokenSymbol {
 	case TOKEN_LEFT_BRACKET_SYMBOL:
@@ -535,6 +542,8 @@ func (lexer *Lexer) AppendString(str string) error {
 		switch token {
 		case TOKEN_EOF:
 			// nothing to do with TOKEN_EOF
+		case TOKEN_IGNORED:
+			lexer.JSONContent.WriteByte(tokenSymbol)
 		case TOKEN_OTHERS:
 			// check if json stream stopped with leading comma
 			if lexer.streamStoppedWithLeadingComma() {

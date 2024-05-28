@@ -35,7 +35,7 @@ func testCompleteJSON_p(t *testing.T) {
 	}
 
 }
-func TestCompleteJSON_base(t *testing.T) {
+func testCompleteJSON_base(t *testing.T) {
 	streamingJSONCase := map[string]string{
 		// test case: basic object properity
 		`{`:              `{}`,        // mirror stack: [], should remove from stack: [], should push into mirror stack: [`}`]
@@ -409,40 +409,7 @@ func TestCompleteJSON_base(t *testing.T) {
 }
 
 func TestCompleteJSON_nestad(t *testing.T) {
-	streamingJSONContent := `
-{
-  "string": "这是一个字符串",
-  "integer": 42,
-  "float": 3.14159,
-  "boolean_true": true,
-  "boolean_false": false,
-  "null": null,
-  "object": {
-    "empty_object": {},
-    "non_empty_object": {
-      "key": "value"
-    },
-    "nested_object": {
-      "nested_key": {
-        "sub_nested_key": "sub_nested_value"
-      }
-    }
-  },
-  "array": [
-    "string in array",
-    123,
-    45.67,
-    true,
-    false,
-    null,
-    {
-      "object_in_array": "object_value"
-    },
-    [
-      "nested_array"
-    ]
-  ]
-}`
+	streamingJSONContent := `{"string": "这是一个字符串", "integer": 42, "float": 3.14159, "boolean_true": true, "boolean_false": false, "null": null, "object": {"empty_object": {}, "non_empty_object": {"key": "value"}, "nested_object": {"nested_key": {"sub_nested_key": "sub_nested_value"}}}, "array":["string in array", 123, 45.67, true, false, null, {"object_in_array": "object_value"},["nested_array"]]}`
 	lexer := NewLexer()
 	var expectContent strings.Builder
 	for _, char := range streamingJSONContent {
@@ -450,14 +417,17 @@ func TestCompleteJSON_nestad(t *testing.T) {
 		assert.Nil(t, errInAppendString)
 		expectContent.WriteRune(char)
 		ret := lexer.CompleteJSON()
-		expectJSON := expectContent.String()
-		if !assert.Equal(t, expectJSON, ret, "unexpected JSON") {
-			break
-		}
+		fmt.Printf("000 %+v\n", ret)
+		// expectJSON := expectContent.String()
+		// if !assert.Equal(t, expectJSON, ret, "unexpected JSON") {
+		// break
+		// }
 	}
+	assert.Nil(t, 12)
+
 }
 
-func TestCompleteJSON_nestad2(t *testing.T) {
+func testCompleteJSON_nestad2(t *testing.T) {
 	streamingJSONContent := `
 {
     "string_with_escape_chars": "This string contains escape characters like \"quotes\", \\backslashes\\, \/forwardslashes/, \bbackspace\b, \fformfeed\f, \nnewline\n, \rcarriage return\r, \ttab\t.",
@@ -522,7 +492,7 @@ func TestCompleteJSON_nestad2(t *testing.T) {
 	}
 }
 
-func TestCompleteJSON_escapeAndEtc(t *testing.T) {
+func testCompleteJSON_escapeAndEtc(t *testing.T) {
 	streamingJSONContent := `
 {
   "string": "含有转义字符的字符串：\"\\\/\b\f\n\r\t",

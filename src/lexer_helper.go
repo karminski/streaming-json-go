@@ -1,5 +1,13 @@
 package main
 
+func isIgnoreToken(c byte) bool {
+	switch c {
+	case '\t', '\n', '\v', '\f', '\r', ' ':
+		return true
+	}
+	return false
+}
+
 func matchStack(stack []int, tokens []int) bool {
 	pointer := len(stack)
 	tokensLeft := len(tokens)
