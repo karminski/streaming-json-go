@@ -8,9 +8,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCompleteJSON_p(t *testing.T) {
+func testCompleteJSON_p(t *testing.T) {
 	streamingJSONCase := map[string]string{
-		`{"a": 1, "b"`: `{"a": 1, "b":null}`,
+		`{"a": 1, "b"`:     `{"a": 1, "b":null}`,
+		`{"a": 1,     "b"`: `{"a": 1,     "b":null}`,
+		`{"a":  -1, "b"`:   `{"a":  -1, "b":null}`,
+		`{"a":  -1 , "b"`:  `{"a":  -1 , "b":null}`,
 	}
 	for testCase, expect := range streamingJSONCase {
 		fmt.Printf("\n\n---------------------------\n")
@@ -25,7 +28,7 @@ func TestCompleteJSON_p(t *testing.T) {
 	}
 
 }
-func testCompleteJSON_base(t *testing.T) {
+func TestCompleteJSON_base(t *testing.T) {
 	streamingJSONCase := map[string]string{
 		// test case: basic object properity
 		`{`:              `{}`,        // mirror stack: [], should remove from stack: [], should push into mirror stack: [`}`]
@@ -384,6 +387,12 @@ func testCompleteJSON_base(t *testing.T) {
 		`[["a"],{"b":"c"`:   `[["a"],{"b":"c"}]`,
 		`[["a"],{"b":"c"}`:  `[["a"],{"b":"c"}]`,
 		`[["a"],{"b":"c"}]`: `[["a"],{"b":"c"}]`,
+
+		// test case: ignore token
+		`{ }`:                                  `{ }`,
+		`{ " a " : -1.2 , `:                    `{ " a " : -1.2}`,
+		`{ " a " : -1.2 , "  b  "  :  " c "  `: `{ " a " : -1.2 , "  b  "  :  " c "}`,
+		`[ ]`:                                  `[ ]`,
 	}
 	for testCase, expect := range streamingJSONCase {
 		fmt.Printf("\n\n---------------------------\n")

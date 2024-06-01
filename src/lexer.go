@@ -426,8 +426,12 @@ func (lexer *Lexer) pushByteIntoPaddingContent(b byte) {
 	lexer.PaddingContent.WriteByte(b)
 }
 
-func (lexer *Lexer) appendPaddingContent() {
+func (lexer *Lexer) appendPaddingContentToJSONContent() {
 	lexer.JSONContent.WriteString(lexer.PaddingContent.String())
+}
+
+func (lexer *Lexer) havePaddingContent() bool {
+	return lexer.PaddingContent.Len() > 0
 }
 
 func (lexer *Lexer) cleanPaddingContent() {
@@ -556,14 +560,14 @@ func (lexer *Lexer) AppendString(str string) error {
 		case TOKEN_EOF:
 			// nothing to do with TOKEN_EOF
 		case TOKEN_IGNORED:
-			lexer.JSONContent.WriteByte(tokenSymbol)
+			lexer.pushByteIntoPaddingContent(tokenSymbol)
 		case TOKEN_OTHERS:
-			// check if json stream stopped with leading comma
-			if lexer.streamStoppedWithLeadingComma() {
-				lexer.pushCommaIntoJSONContent()
-				// pop `,` from  stack
-				lexer.popTokenStack()
+			// check if json stream stopped with padding content
+			if lexer.havePaddingContent() {
+				lexer.appendPaddingContentToJSONContent()
+				lexer.cleanPaddingContent()
 			}
+
 			// double escape character `\`, `\`
 			if lexer.streamStoppedWithLeadingEscapeCharacter() {
 				lexer.pushEscapeCharacterIntoJSONContent()
@@ -575,9 +579,10 @@ func (lexer *Lexer) AppendString(str string) error {
 			lexer.JSONContent.WriteByte(tokenSymbol)
 		case TOKEN_LEFT_BRACKET:
 			fmt.Printf("    case TOKEN_LEFT_BRACKET:\n")
-			// check if json stream stopped with leading comma
-			if lexer.streamStoppedWithLeadingComma() {
-				lexer.pushCommaIntoJSONContent()
+			// check if json stream stopped with padding content
+			if lexer.havePaddingContent() {
+				lexer.appendPaddingContentToJSONContent()
+				lexer.cleanPaddingContent()
 			}
 			lexer.JSONContent.WriteByte(tokenSymbol)
 			if lexer.streamStoppedInAString() {
@@ -607,9 +612,10 @@ func (lexer *Lexer) AppendString(str string) error {
 			lexer.popMirrorTokenStack()
 		case TOKEN_LEFT_BRACE:
 			fmt.Printf("    case TOKEN_LEFT_BRACE:\n")
-			// check if json stream stopped with leading comma
-			if lexer.streamStoppedWithLeadingComma() {
-				lexer.pushCommaIntoJSONContent()
+			// check if json stream stopped with padding content
+			if lexer.havePaddingContent() {
+				lexer.appendPaddingContentToJSONContent()
+				lexer.cleanPaddingContent()
 			}
 			lexer.JSONContent.WriteByte(tokenSymbol)
 			if lexer.streamStoppedInAString() {
@@ -639,9 +645,10 @@ func (lexer *Lexer) AppendString(str string) error {
 			lexer.popMirrorTokenStack()
 		case TOKEN_QUOTE:
 			fmt.Printf("    case TOKEN_QUOTE:\n")
-			// check if json stream stopped with leading comma
-			if lexer.streamStoppedWithLeadingComma() {
-				lexer.pushCommaIntoJSONContent()
+			// check if json stream stopped with padding content
+			if lexer.havePaddingContent() {
+				lexer.appendPaddingContentToJSONContent()
+				lexer.cleanPaddingContent()
 			}
 			if lexer.streamStoppedWithLeadingEscapeCharacter() {
 				lexer.pushEscapeCharacterIntoJSONContent()
@@ -812,9 +819,10 @@ func (lexer *Lexer) AppendString(str string) error {
 				continue
 			}
 
-			// check if json stream stopped with leading comma
-			if lexer.streamStoppedWithLeadingComma() {
-				lexer.pushCommaIntoJSONContent()
+			// check if json stream stopped with padding content
+			if lexer.havePaddingContent() {
+				lexer.appendPaddingContentToJSONContent()
+				lexer.cleanPaddingContent()
 			}
 
 			lexer.JSONContent.WriteByte(tokenSymbol)
@@ -932,9 +940,10 @@ func (lexer *Lexer) AppendString(str string) error {
 				continue
 			}
 
-			// check if json stream stopped with leading comma
-			if lexer.streamStoppedWithLeadingComma() {
-				lexer.pushCommaIntoJSONContent()
+			// check if json stream stopped with padding content
+			if lexer.havePaddingContent() {
+				lexer.appendPaddingContentToJSONContent()
+				lexer.cleanPaddingContent()
 			}
 
 			lexer.JSONContent.WriteByte(tokenSymbol)
@@ -1039,9 +1048,10 @@ func (lexer *Lexer) AppendString(str string) error {
 				continue
 			}
 
-			// check if json stream stopped with leading comma
-			if lexer.streamStoppedWithLeadingComma() {
-				lexer.pushCommaIntoJSONContent()
+			// check if json stream stopped with padding content
+			if lexer.havePaddingContent() {
+				lexer.appendPaddingContentToJSONContent()
+				lexer.cleanPaddingContent()
 			}
 
 			lexer.JSONContent.WriteByte(tokenSymbol)
@@ -1149,9 +1159,10 @@ func (lexer *Lexer) AppendString(str string) error {
 		case TOKEN_NUMBER_9:
 			fmt.Printf("    case TOKEN_NUMBER:\n")
 
-			// check if json stream stopped with leading comma
-			if lexer.streamStoppedWithLeadingComma() {
-				lexer.pushCommaIntoJSONContent()
+			// check if json stream stopped with padding content
+			if lexer.havePaddingContent() {
+				lexer.appendPaddingContentToJSONContent()
+				lexer.cleanPaddingContent()
 			}
 
 			// in negative part of a number
@@ -1195,6 +1206,7 @@ func (lexer *Lexer) AppendString(str string) error {
 			}
 			// in a object or a array, keep the comma in stack but not write it into JSONContent, until next token arrival
 			// the comma must following with token: quote, null, true, false, number
+			lexer.pushByteIntoPaddingContent(tokenSymbol)
 			lexer.pushTokenStack(token)
 		case TOKEN_DOT:
 			// in a string, just skip token
@@ -1226,9 +1238,10 @@ func (lexer *Lexer) AppendString(str string) error {
 				continue
 			}
 
-			// check if json stream stopped with leading comma
-			if lexer.streamStoppedWithLeadingComma() {
-				lexer.pushCommaIntoJSONContent()
+			// check if json stream stopped with padding content
+			if lexer.havePaddingContent() {
+				lexer.appendPaddingContentToJSONContent()
+				lexer.cleanPaddingContent()
 			}
 
 			// just write negative character into stack and waitting other token trigger it.
