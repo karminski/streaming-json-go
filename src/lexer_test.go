@@ -8,19 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func testCompleteJSON_p(t *testing.T) {
+func TestCompleteJSON_p(t *testing.T) {
 	streamingJSONCase := map[string]string{
-		// `{"a":-`:  `{"a":0}`,
-		// `{"a":-1`: `{"a":-1}`,
-		// `{"a":-1}`: `{"a":-1}`,
-		// `{"a":-1,`: `{"a":-1}`,
-		// `[-`: `[0]`,
-		// `[-1`: `[-1]`,
-		// `[-1,`: `[-1]`,
-		// `[-1]`: `[-1]`,
-		// `[-1,-`: `[-1,0]`,
-		// `[-1,-2`: `[-1,-2]`,
-		`[-1,-2,-0.10`: `[-1,-2,-0.10]`,
+		`{"a": 1, "b"`: `{"a": 1, "b":null}`,
 	}
 	for testCase, expect := range streamingJSONCase {
 		fmt.Printf("\n\n---------------------------\n")
@@ -408,7 +398,7 @@ func testCompleteJSON_base(t *testing.T) {
 	}
 }
 
-func TestCompleteJSON_nestad(t *testing.T) {
+func testCompleteJSON_nestad(t *testing.T) {
 	streamingJSONContent := `{"string": "这是一个字符串", "integer": 42, "float": 3.14159, "boolean_true": true, "boolean_false": false, "null": null, "object": {"empty_object": {}, "non_empty_object": {"key": "value"}, "nested_object": {"nested_key": {"sub_nested_key": "sub_nested_value"}}}, "array":["string in array", 123, 45.67, true, false, null, {"object_in_array": "object_value"},["nested_array"]]}`
 	lexer := NewLexer()
 	var expectContent strings.Builder

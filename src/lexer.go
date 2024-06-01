@@ -132,6 +132,7 @@ var mirrorTokenMap = map[int]int{
 
 type Lexer struct {
 	JSONContent      strings.Builder
+	PaddingContent   strings.Builder
 	JSONSegment      string
 	TokenStack       []int
 	MirrorTokenStack []int
@@ -419,6 +420,18 @@ func (lexer *Lexer) pushEscapeCharacterIntoJSONContent() {
 
 func (lexer *Lexer) pushNegativeIntoJSONContent() {
 	lexer.JSONContent.WriteByte(TOKEN_NEGATIVE_SYMBOL)
+}
+
+func (lexer *Lexer) pushByteIntoPaddingContent(b byte) {
+	lexer.PaddingContent.WriteByte(b)
+}
+
+func (lexer *Lexer) appendPaddingContent() {
+	lexer.JSONContent.WriteString(lexer.PaddingContent.String())
+}
+
+func (lexer *Lexer) cleanPaddingContent() {
+	lexer.PaddingContent.Reset()
 }
 
 func (lexer *Lexer) matchToken() (int, byte) {
