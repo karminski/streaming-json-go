@@ -560,6 +560,10 @@ func (lexer *Lexer) AppendString(str string) error {
 		case TOKEN_EOF:
 			// nothing to do with TOKEN_EOF
 		case TOKEN_IGNORED:
+			if lexer.streamStoppedInAString() {
+				lexer.JSONContent.WriteByte(tokenSymbol)
+				continue
+			}
 			lexer.pushByteIntoPaddingContent(tokenSymbol)
 		case TOKEN_OTHERS:
 			// check if json stream stopped with padding content
@@ -602,10 +606,19 @@ func (lexer *Lexer) AppendString(str string) error {
 		case TOKEN_RIGHT_BRACKET:
 			fmt.Printf("    case TOKEN_RIGHT_BRACKET:\n")
 
-			lexer.JSONContent.WriteByte(tokenSymbol)
 			if lexer.streamStoppedInAString() {
+				lexer.JSONContent.WriteByte(tokenSymbol)
 				continue
 			}
+
+			// check if json stream stopped with padding content
+			if lexer.havePaddingContent() {
+				lexer.appendPaddingContentToJSONContent()
+				lexer.cleanPaddingContent()
+			}
+
+			lexer.JSONContent.WriteByte(tokenSymbol)
+
 			// push `]` into stack
 			lexer.pushTokenStack(token)
 			// pop `]` from mirror stack
@@ -617,6 +630,7 @@ func (lexer *Lexer) AppendString(str string) error {
 				lexer.appendPaddingContentToJSONContent()
 				lexer.cleanPaddingContent()
 			}
+
 			lexer.JSONContent.WriteByte(tokenSymbol)
 			if lexer.streamStoppedInAString() {
 				continue
@@ -635,10 +649,18 @@ func (lexer *Lexer) AppendString(str string) error {
 		case TOKEN_RIGHT_BRACE:
 			fmt.Printf("    case TOKEN_RIGHT_BRACE:\n")
 
-			lexer.JSONContent.WriteByte(tokenSymbol)
 			if lexer.streamStoppedInAString() {
+				lexer.JSONContent.WriteByte(tokenSymbol)
 				continue
 			}
+
+			// check if json stream stopped with padding content
+			if lexer.havePaddingContent() {
+				lexer.appendPaddingContentToJSONContent()
+				lexer.cleanPaddingContent()
+			}
+			lexer.JSONContent.WriteByte(tokenSymbol)
+
 			// push `}` into stack
 			lexer.pushTokenStack(token)
 			// pop `}` from mirror stack
@@ -717,10 +739,18 @@ func (lexer *Lexer) AppendString(str string) error {
 			}
 		case TOKEN_COLON:
 			fmt.Printf("    case TOKEN_COLON:\n")
-			lexer.JSONContent.WriteByte(tokenSymbol)
 			if lexer.streamStoppedInAString() {
+				lexer.JSONContent.WriteByte(tokenSymbol)
 				continue
 			}
+
+			// check if json stream stopped with padding content
+			if lexer.havePaddingContent() {
+				lexer.appendPaddingContentToJSONContent()
+				lexer.cleanPaddingContent()
+			}
+			lexer.JSONContent.WriteByte(tokenSymbol)
+
 			lexer.pushTokenStack(token)
 			// pop `:` from mirror stack
 			lexer.popMirrorTokenStack()

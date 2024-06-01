@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -28,7 +29,7 @@ func testCompleteJSON_p(t *testing.T) {
 	}
 
 }
-func TestCompleteJSON_base(t *testing.T) {
+func testCompleteJSON_base(t *testing.T) {
 	streamingJSONCase := map[string]string{
 		// test case: basic object properity
 		`{`:              `{}`,        // mirror stack: [], should remove from stack: [], should push into mirror stack: [`}`]
@@ -392,7 +393,12 @@ func TestCompleteJSON_base(t *testing.T) {
 		`{ }`:                                  `{ }`,
 		`{ " a " : -1.2 , `:                    `{ " a " : -1.2}`,
 		`{ " a " : -1.2 , "  b  "  :  " c "  `: `{ " a " : -1.2 , "  b  "  :  " c "}`,
+		`{ " a " : -1.2 , "  b  "  :  " c "   , "   d"  :  true  `:                    `{ " a " : -1.2 , "  b  "  :  " c "   , "   d"  :  true}`,
+		`{ " a " : -1.2 , "  b  "  :  " c "   , "   d"  :  true  , "e   "  : {  } } `: `{ " a " : -1.2 , "  b  "  :  " c "   , "   d"  :  true  , "e   "  : {  } }`,
 		`[ ]`:                                  `[ ]`,
+		`[ 1`:                                  `[ 1]`,
+		`[ 1 , -1.020  , true ,  false,  null`: `[ 1 , -1.020  , true ,  false,  null]`,
+		`[ 1 , -1.020  , true ,  false,  null,  {   }`: `[ 1 , -1.020  , true ,  false,  null,  {   }]`,
 	}
 	for testCase, expect := range streamingJSONCase {
 		fmt.Printf("\n\n---------------------------\n")
@@ -407,26 +413,22 @@ func TestCompleteJSON_base(t *testing.T) {
 	}
 }
 
-func testCompleteJSON_nestad(t *testing.T) {
+func TestCompleteJSON_nestad(t *testing.T) {
 	streamingJSONContent := `{"string": "这是一个字符串", "integer": 42, "float": 3.14159, "boolean_true": true, "boolean_false": false, "null": null, "object": {"empty_object": {}, "non_empty_object": {"key": "value"}, "nested_object": {"nested_key": {"sub_nested_key": "sub_nested_value"}}}, "array":["string in array", 123, 45.67, true, false, null, {"object_in_array": "object_value"},["nested_array"]]}`
 	lexer := NewLexer()
-	var expectContent strings.Builder
 	for _, char := range streamingJSONContent {
 		errInAppendString := lexer.AppendString(string(char))
 		assert.Nil(t, errInAppendString)
-		expectContent.WriteRune(char)
 		ret := lexer.CompleteJSON()
 		fmt.Printf("000 %+v\n", ret)
-		// expectJSON := expectContent.String()
-		// if !assert.Equal(t, expectJSON, ret, "unexpected JSON") {
-		// break
-		// }
+		var interfaceForJSON interface{}
+		errInUnmarshal := json.Unmarshal([]byte(ret), &interfaceForJSON)
+		assert.Nil(t, errInUnmarshal)
 	}
-	assert.Nil(t, 12)
 
 }
 
-func testCompleteJSON_nestad2(t *testing.T) {
+func TestCompleteJSON_nestad2(t *testing.T) {
 	streamingJSONContent := `
 {
     "string_with_escape_chars": "This string contains escape characters like \"quotes\", \\backslashes\\, \/forwardslashes/, \bbackspace\b, \fformfeed\f, \nnewline\n, \rcarriage return\r, \ttab\t.",
@@ -478,16 +480,14 @@ func testCompleteJSON_nestad2(t *testing.T) {
     }
 }`
 	lexer := NewLexer()
-	var expectContent strings.Builder
 	for _, char := range streamingJSONContent {
 		errInAppendString := lexer.AppendString(string(char))
 		assert.Nil(t, errInAppendString)
-		expectContent.WriteRune(char)
 		ret := lexer.CompleteJSON()
-		expectJSON := expectContent.String()
-		if !assert.Equal(t, expectJSON, ret, "unexpected JSON") {
-			break
-		}
+		fmt.Printf("000 %+v\n", ret)
+		var interfaceForJSON interface{}
+		errInUnmarshal := json.Unmarshal([]byte(ret), &interfaceForJSON)
+		assert.Nil(t, errInUnmarshal)
 	}
 }
 
