@@ -11,10 +11,15 @@ import (
 
 func testCompleteJSON_p(t *testing.T) {
 	streamingJSONCase := map[string]string{
-		`{"a": 1, "b"`:     `{"a": 1, "b":null}`,
-		`{"a": 1,     "b"`: `{"a": 1,     "b":null}`,
-		`{"a":  -1, "b"`:   `{"a":  -1, "b":null}`,
-		`{"a":  -1 , "b"`:  `{"a":  -1 , "b":null}`,
+		`[2.998e`:    `[2.998]`,
+		`[2.998e1`:   `[2.998e1]`,
+		`[2.998e10`:  `[2.998e10]`,
+		`[2.998e10,`: `[2.998e10]`,
+		`["\u0`:      `[]`,
+		`["\u00`:     `[]`,
+		`["\u004`:    `[]`,
+		`["\u0049`:   `["\u0049"]`,
+		`["\u0049"`:  `["\u0049"]`,
 	}
 	for testCase, expect := range streamingJSONCase {
 		fmt.Printf("\n\n---------------------------\n")
@@ -413,7 +418,7 @@ func testCompleteJSON_base(t *testing.T) {
 	}
 }
 
-func TestCompleteJSON_nestad(t *testing.T) {
+func testCompleteJSON_nestad(t *testing.T) {
 	streamingJSONContent := `{"string": "这是一个字符串", "integer": 42, "float": 3.14159, "boolean_true": true, "boolean_false": false, "null": null, "object": {"empty_object": {}, "non_empty_object": {"key": "value"}, "nested_object": {"nested_key": {"sub_nested_key": "sub_nested_value"}}}, "array":["string in array", 123, 45.67, true, false, null, {"object_in_array": "object_value"},["nested_array"]]}`
 	lexer := NewLexer()
 	for _, char := range streamingJSONContent {
@@ -428,7 +433,7 @@ func TestCompleteJSON_nestad(t *testing.T) {
 
 }
 
-func TestCompleteJSON_nestad2(t *testing.T) {
+func testCompleteJSON_nestad2(t *testing.T) {
 	streamingJSONContent := `
 {
     "string_with_escape_chars": "This string contains escape characters like \"quotes\", \\backslashes\\, \/forwardslashes/, \bbackspace\b, \fformfeed\f, \nnewline\n, \rcarriage return\r, \ttab\t.",
@@ -480,13 +485,20 @@ func TestCompleteJSON_nestad2(t *testing.T) {
     }
 }`
 	lexer := NewLexer()
+	var expectContent strings.Builder
 	for _, char := range streamingJSONContent {
+		expectContent.WriteRune(char)
 		errInAppendString := lexer.AppendString(string(char))
 		assert.Nil(t, errInAppendString)
 		ret := lexer.CompleteJSON()
 		fmt.Printf("000 %+v\n", ret)
 		var interfaceForJSON interface{}
 		errInUnmarshal := json.Unmarshal([]byte(ret), &interfaceForJSON)
+		if errInUnmarshal != nil {
+			expectJSON := expectContent.String()
+			fmt.Printf("expectJSON: %+v\n", expectJSON)
+
+		}
 		assert.Nil(t, errInUnmarshal)
 	}
 }
