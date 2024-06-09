@@ -402,6 +402,15 @@ func (lexer *Lexer) streamStoppedInANumberDecimalPart() bool {
 	return lexer.getTopTokenOnStack() == TOKEN_DOT
 }
 
+func (lexer *Lexer) streamStoppedInANumberDecimalPartMiddle() bool {
+	// `.`, TOKEN_NUMBER in stack
+	case1 := []int{
+		TOKEN_DOT,
+		TOKEN_NUMBER,
+	}
+	return matchStack(lexer.TokenStack, case1)
+}
+
 func (lexer *Lexer) streamStoppedWithLeadingComma() bool {
 	return lexer.getTopTokenOnStack() == TOKEN_COMMA
 }
@@ -790,11 +799,18 @@ func (lexer *Lexer) AppendString(str string) error {
 		case TOKEN_ALPHABET_LOWERCASE_E:
 			fmt.Printf("    case TOKEN_ALPHABET_LOWERCASE_E:\n")
 
+			// check if in a number, as `e` (exponent) in scientific notation
+			if lexer.streamStoppedInANumberDecimalPartMiddle() {
+				lexer.pushByteIntoPaddingContent(tokenSymbol)
+				continue
+			}
+
 			lexer.JSONContent.WriteByte(tokenSymbol)
 			// in a string, just skip token
 			if lexer.streamStoppedInAString() {
 				continue
 			}
+
 			// check if `f`, `a`, `l`, `s` in token stack and `e` in mirror stack
 			itIsPartOfTokenFalse := func() bool {
 				left := []int{
