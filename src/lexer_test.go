@@ -11,11 +11,13 @@ import (
 
 func testCompleteJSON_p(t *testing.T) {
 	streamingJSONCase := map[string]string{
-		`["\u0`:     `[""]`,
-		`["\u00`:    `[""]`,
-		`["\u004`:   `[""]`,
-		`["\u0049`:  `["\u0049"]`,
-		`["\u0049"`: `["\u0049"]`,
+		`[1.009E1`:  `[1.009E1]`,
+		`[1.009e+1`: `[1.009e+1]`,
+		`[1.009E+1`: `[1.009E+1]`,
+		`[1.009e-1`: `[1.009e-1]`,
+		`[1.009E-1`: `[1.009E-1]`,
+		`["\uABCD`:  `["\uABCD"]`,
+		`["\uEFEF`:  `["\uEFEF"]`,
 	}
 	for testCase, expect := range streamingJSONCase {
 		fmt.Printf("\n\n---------------------------\n")
