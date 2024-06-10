@@ -18,11 +18,13 @@ const (
 	TOKEN_COMMA                       // ,
 	TOKEN_QUOTE                       // "
 	TOKEN_ESCAPE_CHARACTER            // \
+	TOKEN_SLASH                       // /
 	TOKEN_NEGATIVE                    // -
 	TOKEN_NULL                        // null
 	TOKEN_TRUE                        // true
 	TOKEN_FLASE                       // false
 	TOKEN_ALPHABET_LOWERCASE_A        // a
+	TOKEN_ALPHABET_LOWERCASE_B        // b
 	TOKEN_ALPHABET_LOWERCASE_E        // e
 	TOKEN_ALPHABET_LOWERCASE_F        // f
 	TOKEN_ALPHABET_LOWERCASE_L        // l
@@ -56,8 +58,10 @@ const (
 	TOKEN_COMMA_SYMBOL                = ','
 	TOKEN_QUOTE_SYMBOL                = '"'
 	TOKEN_ESCAPE_CHARACTER_SYMBOL     = '\\'
+	TOKEN_SLASH_SYMBOL                = '/'
 	TOKEN_NEGATIVE_SYMBOL             = '-'
 	TOKEN_ALPHABET_LOWERCASE_A_SYMBOL = 'a'
+	TOKEN_ALPHABET_LOWERCASE_B_SYMBOL = 'b'
 	TOKEN_ALPHABET_LOWERCASE_E_SYMBOL = 'e'
 	TOKEN_ALPHABET_LOWERCASE_F_SYMBOL = 'f'
 	TOKEN_ALPHABET_LOWERCASE_L_SYMBOL = 'l'
@@ -89,11 +93,13 @@ var tokenNameMap = map[int]string{
 	TOKEN_COMMA:                ",",
 	TOKEN_QUOTE:                "\"",
 	TOKEN_ESCAPE_CHARACTER:     "\\",
+	TOKEN_SLASH:                "/",
 	TOKEN_NEGATIVE:             "-",
 	TOKEN_NULL:                 "null",
 	TOKEN_TRUE:                 "true",
 	TOKEN_FLASE:                "false",
 	TOKEN_ALPHABET_LOWERCASE_A: "a",
+	TOKEN_ALPHABET_LOWERCASE_B: "b",
 	TOKEN_ALPHABET_LOWERCASE_E: "e",
 	TOKEN_ALPHABET_LOWERCASE_F: "f",
 	TOKEN_ALPHABET_LOWERCASE_L: "l",
@@ -394,6 +400,20 @@ func (lexer *Lexer) streamStoppedInAString() bool {
 	return lexer.getTopTokenOnStack() == TOKEN_QUOTE && lexer.getTopTokenOnMirrorStack() == TOKEN_QUOTE
 }
 
+// check if JSON stream stopped in a string's unicode escape, like `\u????`
+func (lexer *Lexer) streamStoppedInAnStringUnicodeEscape() bool {
+	// `\`, `u` in stack
+	case1 := []int{
+		TOKEN_ESCAPE_CHARACTER,
+		TOKEN_ALPHABET_LOWERCASE_U,
+	}
+	// `"` in mirror stack
+	case2 := []int{
+		TOKEN_QUOTE,
+	}
+	return matchStack(lexer.TokenStack, case1) && matchStack(lexer.MirrorTokenStack, case2)
+}
+
 func (lexer *Lexer) streamStoppedInANumber() bool {
 	return lexer.getTopTokenOnStack() == TOKEN_NUMBER
 }
@@ -491,12 +511,18 @@ func (lexer *Lexer) matchToken() (int, byte) {
 	case TOKEN_ESCAPE_CHARACTER_SYMBOL:
 		lexer.skipJSONSegment(1)
 		return TOKEN_ESCAPE_CHARACTER, tokenSymbol
+	case TOKEN_SLASH_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_SLASH, tokenSymbol
 	case TOKEN_NEGATIVE_SYMBOL:
 		lexer.skipJSONSegment(1)
 		return TOKEN_NEGATIVE, tokenSymbol
 	case TOKEN_ALPHABET_LOWERCASE_A_SYMBOL:
 		lexer.skipJSONSegment(1)
 		return TOKEN_ALPHABET_LOWERCASE_A, tokenSymbol
+	case TOKEN_ALPHABET_LOWERCASE_B_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_ALPHABET_LOWERCASE_B, tokenSymbol
 	case TOKEN_ALPHABET_LOWERCASE_E_SYMBOL:
 		lexer.skipJSONSegment(1)
 		return TOKEN_ALPHABET_LOWERCASE_E, tokenSymbol
@@ -676,18 +702,27 @@ func (lexer *Lexer) AppendString(str string) error {
 			lexer.popMirrorTokenStack()
 		case TOKEN_QUOTE:
 			fmt.Printf("    case TOKEN_QUOTE:\n")
+
+			// check if escape quote `\"`
+			if lexer.streamStoppedWithLeadingEscapeCharacter() {
+				// push padding escape character `\` into JSON content
+				lexer.appendPaddingContentToJSONContent()
+				lexer.cleanPaddingContent()
+
+				// write current character into JSON content
+				lexer.JSONContent.WriteByte(tokenSymbol)
+
+				// pop `\` from  stack
+				lexer.popTokenStack()
+				continue
+			}
+
 			// check if json stream stopped with padding content
 			if lexer.havePaddingContent() {
 				lexer.appendPaddingContentToJSONContent()
 				lexer.cleanPaddingContent()
 			}
-			if lexer.streamStoppedWithLeadingEscapeCharacter() {
-				lexer.pushEscapeCharacterIntoJSONContent()
-				lexer.JSONContent.WriteByte(tokenSymbol)
-				// pop `\` from  stack
-				lexer.popTokenStack()
-				continue
-			}
+
 			// start process
 			lexer.JSONContent.WriteByte(tokenSymbol)
 			lexer.pushTokenStack(token)
@@ -796,6 +831,34 @@ func (lexer *Lexer) AppendString(str string) error {
 			}
 			lexer.pushTokenStack(token)
 			lexer.popMirrorTokenStack()
+		case TOKEN_ALPHABET_LOWERCASE_B:
+			fmt.Printf("    case TOKEN_ALPHABET_LOWERCASE_B:\n")
+			// \b escape `\`, `b`
+			if lexer.streamStoppedWithLeadingEscapeCharacter() {
+				// push padding escape character `\` into JSON content
+				lexer.appendPaddingContentToJSONContent()
+				lexer.cleanPaddingContent()
+
+				// write current character into JSON content
+				lexer.JSONContent.WriteByte(tokenSymbol)
+
+				// pop `\` from  stack
+				lexer.popTokenStack()
+				continue
+			}
+
+			// check if json stream stopped with padding content
+			if lexer.havePaddingContent() {
+				lexer.appendPaddingContentToJSONContent()
+				lexer.cleanPaddingContent()
+			}
+
+			lexer.JSONContent.WriteByte(tokenSymbol)
+			// in a string, just skip token
+			if lexer.streamStoppedInAString() {
+				continue
+			}
+
 		case TOKEN_ALPHABET_LOWERCASE_E:
 			fmt.Printf("    case TOKEN_ALPHABET_LOWERCASE_E:\n")
 
@@ -855,11 +918,15 @@ func (lexer *Lexer) AppendString(str string) error {
 			lexer.popMirrorTokenStack()
 		case TOKEN_ALPHABET_LOWERCASE_F:
 			fmt.Printf("    case TOKEN_ALPHABET_LOWERCASE_F:\n")
-
 			// \f escape `\`, `f`
 			if lexer.streamStoppedWithLeadingEscapeCharacter() {
-				lexer.pushEscapeCharacterIntoJSONContent()
+				// push padding escape character `\` into JSON content
+				lexer.appendPaddingContentToJSONContent()
+				lexer.cleanPaddingContent()
+
+				// write current character into JSON content
 				lexer.JSONContent.WriteByte(tokenSymbol)
+
 				// pop `\` from  stack
 				lexer.popTokenStack()
 				continue
@@ -979,8 +1046,13 @@ func (lexer *Lexer) AppendString(str string) error {
 			fmt.Printf("    case TOKEN_ALPHABET_LOWERCASE_N:\n")
 			// \n escape `\`, `n`
 			if lexer.streamStoppedWithLeadingEscapeCharacter() {
-				lexer.pushEscapeCharacterIntoJSONContent()
+				// push padding escape character `\` into JSON content
+				lexer.appendPaddingContentToJSONContent()
+				lexer.cleanPaddingContent()
+
+				// write current character into JSON content
 				lexer.JSONContent.WriteByte(tokenSymbol)
+
 				// pop `\` from  stack
 				lexer.popTokenStack()
 				continue
@@ -1013,8 +1085,13 @@ func (lexer *Lexer) AppendString(str string) error {
 			fmt.Printf("    case TOKEN_ALPHABET_LOWERCASE_R:\n")
 			// \r escape `\`, `r`
 			if lexer.streamStoppedWithLeadingEscapeCharacter() {
-				lexer.pushEscapeCharacterIntoJSONContent()
+				// push padding escape character `\` into JSON content
+				lexer.appendPaddingContentToJSONContent()
+				lexer.cleanPaddingContent()
+
+				// write current character into JSON content
 				lexer.JSONContent.WriteByte(tokenSymbol)
+
 				// pop `\` from  stack
 				lexer.popTokenStack()
 				continue
@@ -1087,8 +1164,13 @@ func (lexer *Lexer) AppendString(str string) error {
 
 			// \t escape `\`, `t`
 			if lexer.streamStoppedWithLeadingEscapeCharacter() {
-				lexer.pushEscapeCharacterIntoJSONContent()
+				// push padding escape character `\` into JSON content
+				lexer.appendPaddingContentToJSONContent()
+				lexer.cleanPaddingContent()
+
+				// write current character into JSON content
 				lexer.JSONContent.WriteByte(tokenSymbol)
+
 				// pop `\` from  stack
 				lexer.popTokenStack()
 				continue
@@ -1130,10 +1212,8 @@ func (lexer *Lexer) AppendString(str string) error {
 			fmt.Printf("    case TOKEN_ALPHABET_LOWERCASE_U:\n")
 			// unicode escape `\`, `u`
 			if lexer.streamStoppedWithLeadingEscapeCharacter() {
-				lexer.pushEscapeCharacterIntoJSONContent()
-				lexer.JSONContent.WriteByte(tokenSymbol)
-				// pop `\` from  stack
-				lexer.popTokenStack()
+				lexer.pushTokenStack(token)
+				lexer.PaddingContent.WriteByte(tokenSymbol)
 				continue
 			}
 
@@ -1204,6 +1284,18 @@ func (lexer *Lexer) AppendString(str string) error {
 			fallthrough
 		case TOKEN_NUMBER_9:
 			fmt.Printf("    case TOKEN_NUMBER:\n")
+			if lexer.streamStoppedInAnStringUnicodeEscape() {
+				lexer.pushByteIntoPaddingContent(tokenSymbol)
+				// check if unicode escape is full length
+				if lexer.PaddingContent.Len() == 6 {
+					lexer.appendPaddingContentToJSONContent()
+					lexer.cleanPaddingContent()
+					// pop `\`, `u` from stack
+					lexer.popTokenStack()
+					lexer.popTokenStack()
+				}
+				continue
+			}
 
 			// check if json stream stopped with padding content
 			if lexer.havePaddingContent() {
@@ -1263,18 +1355,40 @@ func (lexer *Lexer) AppendString(str string) error {
 			// use 0 for decimal part place holder
 			lexer.pushTokenStack(token)
 			lexer.pushMirrorTokenStack(TOKEN_NUMBER_0)
+		case TOKEN_SLASH:
+			fmt.Printf("    case TOKEN_SLASH:\n")
+			// escape character `\`, `/`
+			if lexer.streamStoppedWithLeadingEscapeCharacter() {
+				// push padding escape character `\` into JSON content
+				lexer.appendPaddingContentToJSONContent()
+				lexer.cleanPaddingContent()
+
+				// write current character into JSON content
+				lexer.JSONContent.WriteByte(tokenSymbol)
+
+				// pop `\` from  stack
+				lexer.popTokenStack()
+				continue
+			}
+			// error, invalied json
 		case TOKEN_ESCAPE_CHARACTER:
 			fmt.Printf("    case TOKEN_ESCAPE_CHARACTER:\n")
 			// double escape character `\`, `\`
 			if lexer.streamStoppedWithLeadingEscapeCharacter() {
-				lexer.pushEscapeCharacterIntoJSONContent()
+				// push padding escape character `\` into JSON content
+				lexer.appendPaddingContentToJSONContent()
+				lexer.cleanPaddingContent()
+
+				// write current character into JSON content
 				lexer.JSONContent.WriteByte(tokenSymbol)
+
 				// pop `\` from  stack
 				lexer.popTokenStack()
 				continue
 			}
 			// just write escape character into stack and waitting other token trigger escape method.
 			lexer.pushTokenStack(token)
+			lexer.pushByteIntoPaddingContent(TOKEN_ESCAPE_CHARACTER_SYMBOL)
 		case TOKEN_NEGATIVE:
 			fmt.Printf("    case TOKEN_NEGATIVE:\n")
 
