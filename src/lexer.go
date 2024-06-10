@@ -25,6 +25,8 @@ const (
 	TOKEN_FLASE                       // false
 	TOKEN_ALPHABET_LOWERCASE_A        // a
 	TOKEN_ALPHABET_LOWERCASE_B        // b
+	TOKEN_ALPHABET_LOWERCASE_C        // c
+	TOKEN_ALPHABET_LOWERCASE_D        // d
 	TOKEN_ALPHABET_LOWERCASE_E        // e
 	TOKEN_ALPHABET_LOWERCASE_F        // f
 	TOKEN_ALPHABET_LOWERCASE_L        // l
@@ -33,6 +35,12 @@ const (
 	TOKEN_ALPHABET_LOWERCASE_S        // s
 	TOKEN_ALPHABET_LOWERCASE_T        // t
 	TOKEN_ALPHABET_LOWERCASE_U        // u
+	TOKEN_ALPHABET_UPPERCASE_A        // A
+	TOKEN_ALPHABET_UPPERCASE_B        // B
+	TOKEN_ALPHABET_UPPERCASE_C        // C
+	TOKEN_ALPHABET_UPPERCASE_D        // D
+	TOKEN_ALPHABET_UPPERCASE_E        // E
+	TOKEN_ALPHABET_UPPERCASE_F        // F
 	TOKEN_NUMBER                      // number
 	TOKEN_NUMBER_0                    // 0
 	TOKEN_NUMBER_1                    // 1
@@ -62,6 +70,8 @@ const (
 	TOKEN_NEGATIVE_SYMBOL             = '-'
 	TOKEN_ALPHABET_LOWERCASE_A_SYMBOL = 'a'
 	TOKEN_ALPHABET_LOWERCASE_B_SYMBOL = 'b'
+	TOKEN_ALPHABET_LOWERCASE_C_SYMBOL = 'c'
+	TOKEN_ALPHABET_LOWERCASE_D_SYMBOL = 'd'
 	TOKEN_ALPHABET_LOWERCASE_E_SYMBOL = 'e'
 	TOKEN_ALPHABET_LOWERCASE_F_SYMBOL = 'f'
 	TOKEN_ALPHABET_LOWERCASE_L_SYMBOL = 'l'
@@ -70,6 +80,12 @@ const (
 	TOKEN_ALPHABET_LOWERCASE_S_SYMBOL = 's'
 	TOKEN_ALPHABET_LOWERCASE_T_SYMBOL = 't'
 	TOKEN_ALPHABET_LOWERCASE_U_SYMBOL = 'u'
+	TOKEN_ALPHABET_UPPERCASE_A_SYMBOL = 'A'
+	TOKEN_ALPHABET_UPPERCASE_B_SYMBOL = 'B'
+	TOKEN_ALPHABET_UPPERCASE_C_SYMBOL = 'C'
+	TOKEN_ALPHABET_UPPERCASE_D_SYMBOL = 'D'
+	TOKEN_ALPHABET_UPPERCASE_E_SYMBOL = 'E'
+	TOKEN_ALPHABET_UPPERCASE_F_SYMBOL = 'F'
 	TOKEN_NUMBER_0_SYMBOL             = '0'
 	TOKEN_NUMBER_1_SYMBOL             = '1'
 	TOKEN_NUMBER_2_SYMBOL             = '2'
@@ -100,6 +116,8 @@ var tokenNameMap = map[int]string{
 	TOKEN_FLASE:                "false",
 	TOKEN_ALPHABET_LOWERCASE_A: "a",
 	TOKEN_ALPHABET_LOWERCASE_B: "b",
+	TOKEN_ALPHABET_LOWERCASE_C: "c",
+	TOKEN_ALPHABET_LOWERCASE_D: "d",
 	TOKEN_ALPHABET_LOWERCASE_E: "e",
 	TOKEN_ALPHABET_LOWERCASE_F: "f",
 	TOKEN_ALPHABET_LOWERCASE_L: "l",
@@ -108,6 +126,12 @@ var tokenNameMap = map[int]string{
 	TOKEN_ALPHABET_LOWERCASE_S: "s",
 	TOKEN_ALPHABET_LOWERCASE_T: "t",
 	TOKEN_ALPHABET_LOWERCASE_U: "u",
+	TOKEN_ALPHABET_UPPERCASE_A: "A",
+	TOKEN_ALPHABET_UPPERCASE_B: "B",
+	TOKEN_ALPHABET_UPPERCASE_C: "C",
+	TOKEN_ALPHABET_UPPERCASE_D: "D",
+	TOKEN_ALPHABET_UPPERCASE_E: "E",
+	TOKEN_ALPHABET_UPPERCASE_F: "F",
 	TOKEN_NUMBER_0:             "0",
 	TOKEN_NUMBER_1:             "1",
 	TOKEN_NUMBER_2:             "2",
@@ -523,6 +547,12 @@ func (lexer *Lexer) matchToken() (int, byte) {
 	case TOKEN_ALPHABET_LOWERCASE_B_SYMBOL:
 		lexer.skipJSONSegment(1)
 		return TOKEN_ALPHABET_LOWERCASE_B, tokenSymbol
+	case TOKEN_ALPHABET_LOWERCASE_C_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_ALPHABET_LOWERCASE_C, tokenSymbol
+	case TOKEN_ALPHABET_LOWERCASE_D_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_ALPHABET_LOWERCASE_D, tokenSymbol
 	case TOKEN_ALPHABET_LOWERCASE_E_SYMBOL:
 		lexer.skipJSONSegment(1)
 		return TOKEN_ALPHABET_LOWERCASE_E, tokenSymbol
@@ -547,6 +577,24 @@ func (lexer *Lexer) matchToken() (int, byte) {
 	case TOKEN_ALPHABET_LOWERCASE_U_SYMBOL:
 		lexer.skipJSONSegment(1)
 		return TOKEN_ALPHABET_LOWERCASE_U, tokenSymbol
+	case TOKEN_ALPHABET_UPPERCASE_A_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_ALPHABET_UPPERCASE_A, tokenSymbol
+	case TOKEN_ALPHABET_UPPERCASE_B_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_ALPHABET_UPPERCASE_B, tokenSymbol
+	case TOKEN_ALPHABET_UPPERCASE_C_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_ALPHABET_UPPERCASE_C, tokenSymbol
+	case TOKEN_ALPHABET_UPPERCASE_D_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_ALPHABET_UPPERCASE_D, tokenSymbol
+	case TOKEN_ALPHABET_UPPERCASE_E_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_ALPHABET_UPPERCASE_E, tokenSymbol
+	case TOKEN_ALPHABET_UPPERCASE_F_SYMBOL:
+		lexer.skipJSONSegment(1)
+		return TOKEN_ALPHABET_UPPERCASE_F, tokenSymbol
 	case TOKEN_NUMBER_0_SYMBOL:
 		lexer.skipJSONSegment(1)
 		return TOKEN_NUMBER_0, tokenSymbol
@@ -800,6 +848,19 @@ func (lexer *Lexer) AppendString(str string) error {
 			lexer.popMirrorTokenStack()
 		case TOKEN_ALPHABET_LOWERCASE_A:
 			fmt.Printf("    case TOKEN_ALPHABET_LOWERCASE_A:\n")
+			// as hex in unicode
+			if lexer.streamStoppedInAnStringUnicodeEscape() {
+				lexer.pushByteIntoPaddingContent(tokenSymbol)
+				// check if unicode escape is full length
+				if lexer.PaddingContent.Len() == 6 {
+					lexer.appendPaddingContentToJSONContent()
+					lexer.cleanPaddingContent()
+					// pop `\`, `u` from stack
+					lexer.popTokenStack()
+					lexer.popTokenStack()
+				}
+				continue
+			}
 
 			lexer.JSONContent.WriteByte(tokenSymbol)
 			// in a string, just skip token
@@ -833,6 +894,20 @@ func (lexer *Lexer) AppendString(str string) error {
 			lexer.popMirrorTokenStack()
 		case TOKEN_ALPHABET_LOWERCASE_B:
 			fmt.Printf("    case TOKEN_ALPHABET_LOWERCASE_B:\n")
+			// as hex in unicode
+			if lexer.streamStoppedInAnStringUnicodeEscape() {
+				lexer.pushByteIntoPaddingContent(tokenSymbol)
+				// check if unicode escape is full length
+				if lexer.PaddingContent.Len() == 6 {
+					lexer.appendPaddingContentToJSONContent()
+					lexer.cleanPaddingContent()
+					// pop `\`, `u` from stack
+					lexer.popTokenStack()
+					lexer.popTokenStack()
+				}
+				continue
+			}
+
 			// \b escape `\`, `b`
 			if lexer.streamStoppedWithLeadingEscapeCharacter() {
 				// push padding escape character `\` into JSON content
@@ -858,9 +933,22 @@ func (lexer *Lexer) AppendString(str string) error {
 			if lexer.streamStoppedInAString() {
 				continue
 			}
-
 		case TOKEN_ALPHABET_LOWERCASE_E:
 			fmt.Printf("    case TOKEN_ALPHABET_LOWERCASE_E:\n")
+
+			// as hex in unicode
+			if lexer.streamStoppedInAnStringUnicodeEscape() {
+				lexer.pushByteIntoPaddingContent(tokenSymbol)
+				// check if unicode escape is full length
+				if lexer.PaddingContent.Len() == 6 {
+					lexer.appendPaddingContentToJSONContent()
+					lexer.cleanPaddingContent()
+					// pop `\`, `u` from stack
+					lexer.popTokenStack()
+					lexer.popTokenStack()
+				}
+				continue
+			}
 
 			// check if in a number, as `e` (exponent) in scientific notation
 			if lexer.streamStoppedInANumberDecimalPartMiddle() {
@@ -918,6 +1006,20 @@ func (lexer *Lexer) AppendString(str string) error {
 			lexer.popMirrorTokenStack()
 		case TOKEN_ALPHABET_LOWERCASE_F:
 			fmt.Printf("    case TOKEN_ALPHABET_LOWERCASE_F:\n")
+			// as hex in unicode
+			if lexer.streamStoppedInAnStringUnicodeEscape() {
+				lexer.pushByteIntoPaddingContent(tokenSymbol)
+				// check if unicode escape is full length
+				if lexer.PaddingContent.Len() == 6 {
+					lexer.appendPaddingContentToJSONContent()
+					lexer.cleanPaddingContent()
+					// pop `\`, `u` from stack
+					lexer.popTokenStack()
+					lexer.popTokenStack()
+				}
+				continue
+			}
+
 			// \f escape `\`, `f`
 			if lexer.streamStoppedWithLeadingEscapeCharacter() {
 				// push padding escape character `\` into JSON content
@@ -1264,6 +1366,68 @@ func (lexer *Lexer) AppendString(str string) error {
 			}
 			lexer.pushTokenStack(token)
 			lexer.popMirrorTokenStack()
+		case TOKEN_ALPHABET_UPPERCASE_A:
+			fallthrough
+		case TOKEN_ALPHABET_UPPERCASE_B:
+			fallthrough
+		case TOKEN_ALPHABET_UPPERCASE_C:
+			fallthrough
+		case TOKEN_ALPHABET_UPPERCASE_D:
+			fallthrough
+		case TOKEN_ALPHABET_LOWERCASE_C:
+			fallthrough
+		case TOKEN_ALPHABET_LOWERCASE_D:
+			fallthrough
+		case TOKEN_ALPHABET_UPPERCASE_F:
+			fmt.Printf("    case TOKEN_ALPHABET_UPPERCASE_?:\n")
+
+			// as hex in unicode
+			if lexer.streamStoppedInAnStringUnicodeEscape() {
+				lexer.pushByteIntoPaddingContent(tokenSymbol)
+				// check if unicode escape is full length
+				if lexer.PaddingContent.Len() == 6 {
+					lexer.appendPaddingContentToJSONContent()
+					lexer.cleanPaddingContent()
+					// pop `\`, `u` from stack
+					lexer.popTokenStack()
+					lexer.popTokenStack()
+				}
+				continue
+			}
+
+			lexer.JSONContent.WriteByte(tokenSymbol)
+			// in a string, just skip token
+			if lexer.streamStoppedInAString() {
+				continue
+			}
+		case TOKEN_ALPHABET_UPPERCASE_E:
+			fmt.Printf("    case TOKEN_ALPHABET_UPPERCASE_?:\n")
+
+			// as hex in unicode
+			if lexer.streamStoppedInAnStringUnicodeEscape() {
+				lexer.pushByteIntoPaddingContent(tokenSymbol)
+				// check if unicode escape is full length
+				if lexer.PaddingContent.Len() == 6 {
+					lexer.appendPaddingContentToJSONContent()
+					lexer.cleanPaddingContent()
+					// pop `\`, `u` from stack
+					lexer.popTokenStack()
+					lexer.popTokenStack()
+				}
+				continue
+			}
+
+			// check if in a number, as `E` (exponent) in scientific notation
+			if lexer.streamStoppedInANumberDecimalPartMiddle() {
+				lexer.pushByteIntoPaddingContent(tokenSymbol)
+				continue
+			}
+
+			lexer.JSONContent.WriteByte(tokenSymbol)
+			// in a string, just skip token
+			if lexer.streamStoppedInAString() {
+				continue
+			}
 		case TOKEN_NUMBER_0:
 			fallthrough
 		case TOKEN_NUMBER_1:
