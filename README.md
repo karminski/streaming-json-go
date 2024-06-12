@@ -42,6 +42,22 @@ fmt.Printf("%s\n", completedJSONB) // will print `{"a":[true]}`
 
 For more examples please see: [examples](./examples/)
 
+### Benchmarks
+
+Using Go 1.21.1, single thread on Intel(R) Xeon(R) Platinum 8252C CPU @ 3.80GHz.
+
+```
+$ GOMAXPROCS=1 go test -bench=.
+goos: windows
+goarch: amd64
+pkg: github.com/karminski/streaming-json-go
+cpu: Intel(R) Xeon(R) Platinum 8252C CPU @ 3.80GHz
+BenchmarkParse/streaming-json-go-append-json-segment                142856              8148 ns/op          47.25 MB/s        3544 B/op         50 allocs/op
+BenchmarkParse/streaming-json-go-append-and-complete-json-segment   142857              8131 ns/op          47.35 MB/s        3544 B/op         50 allocs/op
+PASS
+ok      github.com/karminski/streaming-json-go  2.539s
+```
+
 ### About Golang Version
 
 This library itself does not use any third-party Golang libraries, so it can run on version 1.14 and above. 
