@@ -1,4 +1,4 @@
-package main
+package streamingjsongo
 
 func isIgnoreToken(c byte) bool {
 	switch c {

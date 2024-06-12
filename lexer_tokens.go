@@ -1,4 +1,4 @@
-package main
+package streamingjsongo
 
 // token const
 const (
