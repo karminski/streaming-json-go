@@ -2,31 +2,12 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func testCompleteJSON_p(t *testing.T) {
-	streamingJSONCase := map[string]string{
-		// `["\uabcd`: `["\uabcd"]`,
-		`["\ucdef`: `["\ucdef"]`,
-	}
-	for testCase, expect := range streamingJSONCase {
-		fmt.Printf("\n\n---------------------------\n")
-		fmt.Printf("current test case: `%s`\n", testCase)
-		lexer := NewLexer()
-		errInAppendString := lexer.AppendString(testCase)
-		ret := lexer.CompleteJSON()
-		assert.Nil(t, errInAppendString)
-		if !assert.Equal(t, expect, ret, "unexpected JSON") {
-			break
-		}
-	}
-
-}
 func TestCompleteJSON_base(t *testing.T) {
 	streamingJSONCase := map[string]string{
 		// test case: basic object properity
@@ -483,8 +464,6 @@ func TestCompleteJSON_base(t *testing.T) {
 		`[ 1 , -1.020  , true ,  false,  null,  {   }`: `[ 1 , -1.020  , true ,  false,  null,  {   }]`,
 	}
 	for testCase, expect := range streamingJSONCase {
-		fmt.Printf("\n\n---------------------------\n")
-		fmt.Printf("current test case: `%s`\n", testCase)
 		lexer := NewLexer()
 		errInAppendString := lexer.AppendString(testCase)
 		ret := lexer.CompleteJSON()
@@ -495,14 +474,13 @@ func TestCompleteJSON_base(t *testing.T) {
 	}
 }
 
-func testCompleteJSON_nestad(t *testing.T) {
+func TestCompleteJSON_nestad(t *testing.T) {
 	streamingJSONContent := `{"string": "这是一个字符串", "integer": 42, "float": 3.14159, "boolean_true": true, "boolean_false": false, "null": null, "object": {"empty_object": {}, "non_empty_object": {"key": "value"}, "nested_object": {"nested_key": {"sub_nested_key": "sub_nested_value"}}}, "array":["string in array", 123, 45.67, true, false, null, {"object_in_array": "object_value"},["nested_array"]]}`
 	lexer := NewLexer()
 	for _, char := range streamingJSONContent {
 		errInAppendString := lexer.AppendString(string(char))
 		assert.Nil(t, errInAppendString)
 		ret := lexer.CompleteJSON()
-		fmt.Printf("000 %+v\n", ret)
 		var interfaceForJSON interface{}
 		errInUnmarshal := json.Unmarshal([]byte(ret), &interfaceForJSON)
 		assert.Nil(t, errInUnmarshal)
@@ -510,9 +488,8 @@ func testCompleteJSON_nestad(t *testing.T) {
 
 }
 
-func testCompleteJSON_nestad2(t *testing.T) {
-	streamingJSONContent := `
-{
+func TestCompleteJSON_nestad2(t *testing.T) {
+	streamingJSONContent := `{
     "string_with_escape_chars": "This string contains escape characters like \"quotes\", \\backslashes\\, \/forwardslashes/, \bbackspace\b, \fformfeed\f, \nnewline\n, \rcarriage return\r, \ttab\t.",
     "scientific_notation": 2.998e8,
     "unicode_characters": "Some unicode characters: \u0041\u0042\u0043\u0044",
@@ -568,21 +545,14 @@ func testCompleteJSON_nestad2(t *testing.T) {
 		errInAppendString := lexer.AppendString(string(char))
 		assert.Nil(t, errInAppendString)
 		ret := lexer.CompleteJSON()
-		fmt.Printf("000 %+v\n", ret)
 		var interfaceForJSON interface{}
 		errInUnmarshal := json.Unmarshal([]byte(ret), &interfaceForJSON)
-		if errInUnmarshal != nil {
-			expectJSON := expectContent.String()
-			fmt.Printf("expectJSON: %+v\n", expectJSON)
-
-		}
 		assert.Nil(t, errInUnmarshal)
 	}
 }
 
-func testCompleteJSON_escapeAndEtc(t *testing.T) {
-	streamingJSONContent := `
-{
+func TestCompleteJSON_escapeAndEtc(t *testing.T) {
+	streamingJSONContent := `{
   "string": "含有转义字符的字符串：\"\\\/\b\f\n\r\t",
   "string_unicode": "含Unicode字符：\u6211\u662F",
   "negative_integer": -42,
@@ -608,14 +578,13 @@ func testCompleteJSON_escapeAndEtc(t *testing.T) {
 	lexer := NewLexer()
 	var expectContent strings.Builder
 	for _, char := range streamingJSONContent {
+		expectContent.WriteRune(char)
 		errInAppendString := lexer.AppendString(string(char))
 		assert.Nil(t, errInAppendString)
-		expectContent.WriteRune(char)
 		ret := lexer.CompleteJSON()
-		expectJSON := expectContent.String()
-		if !assert.Equal(t, expectJSON, ret, "unexpected JSON") {
-			break
-		}
+		var interfaceForJSON interface{}
+		errInUnmarshal := json.Unmarshal([]byte(ret), &interfaceForJSON)
+		assert.Nil(t, errInUnmarshal)
 	}
 
 }
