@@ -5,157 +5,20 @@ import (
 	"strings"
 )
 
-// token const
-const (
-	TOKEN_EOF                  = iota // end-of-file
-	TOKEN_IGNORED                     // \t', '\n', '\v', '\f', '\r', ' '
-	TOKEN_LEFT_BRACKET                // [
-	TOKEN_RIGHT_BRACKET               // ]
-	TOKEN_LEFT_BRACE                  // {
-	TOKEN_RIGHT_BRACE                 // }
-	TOKEN_COLON                       // :
-	TOKEN_DOT                         // .
-	TOKEN_COMMA                       // ,
-	TOKEN_QUOTE                       // "
-	TOKEN_ESCAPE_CHARACTER            // \
-	TOKEN_SLASH                       // /
-	TOKEN_NEGATIVE                    // -
-	TOKEN_NULL                        // null
-	TOKEN_TRUE                        // true
-	TOKEN_FLASE                       // false
-	TOKEN_ALPHABET_LOWERCASE_A        // a
-	TOKEN_ALPHABET_LOWERCASE_B        // b
-	TOKEN_ALPHABET_LOWERCASE_C        // c
-	TOKEN_ALPHABET_LOWERCASE_D        // d
-	TOKEN_ALPHABET_LOWERCASE_E        // e
-	TOKEN_ALPHABET_LOWERCASE_F        // f
-	TOKEN_ALPHABET_LOWERCASE_L        // l
-	TOKEN_ALPHABET_LOWERCASE_N        // n
-	TOKEN_ALPHABET_LOWERCASE_R        // r
-	TOKEN_ALPHABET_LOWERCASE_S        // s
-	TOKEN_ALPHABET_LOWERCASE_T        // t
-	TOKEN_ALPHABET_LOWERCASE_U        // u
-	TOKEN_ALPHABET_UPPERCASE_A        // A
-	TOKEN_ALPHABET_UPPERCASE_B        // B
-	TOKEN_ALPHABET_UPPERCASE_C        // C
-	TOKEN_ALPHABET_UPPERCASE_D        // D
-	TOKEN_ALPHABET_UPPERCASE_E        // E
-	TOKEN_ALPHABET_UPPERCASE_F        // F
-	TOKEN_NUMBER                      // number
-	TOKEN_NUMBER_0                    // 0
-	TOKEN_NUMBER_1                    // 1
-	TOKEN_NUMBER_2                    // 2
-	TOKEN_NUMBER_3                    // 3
-	TOKEN_NUMBER_4                    // 4
-	TOKEN_NUMBER_5                    // 5
-	TOKEN_NUMBER_6                    // 6
-	TOKEN_NUMBER_7                    // 7
-	TOKEN_NUMBER_8                    // 8
-	TOKEN_NUMBER_9                    // 9
-	TOKEN_OTHERS                      // anything else in json
-)
-
-// token symbol const
-const (
-	TOKEN_LEFT_BRACKET_SYMBOL         = '['
-	TOKEN_RIGHT_BRACKET_SYMBOL        = ']'
-	TOKEN_LEFT_BRACE_SYMBOL           = '{'
-	TOKEN_RIGHT_BRACE_SYMBOL          = '}'
-	TOKEN_COLON_SYMBOL                = ':'
-	TOKEN_DOT_SYMBOL                  = '.'
-	TOKEN_COMMA_SYMBOL                = ','
-	TOKEN_QUOTE_SYMBOL                = '"'
-	TOKEN_ESCAPE_CHARACTER_SYMBOL     = '\\'
-	TOKEN_SLASH_SYMBOL                = '/'
-	TOKEN_NEGATIVE_SYMBOL             = '-'
-	TOKEN_ALPHABET_LOWERCASE_A_SYMBOL = 'a'
-	TOKEN_ALPHABET_LOWERCASE_B_SYMBOL = 'b'
-	TOKEN_ALPHABET_LOWERCASE_C_SYMBOL = 'c'
-	TOKEN_ALPHABET_LOWERCASE_D_SYMBOL = 'd'
-	TOKEN_ALPHABET_LOWERCASE_E_SYMBOL = 'e'
-	TOKEN_ALPHABET_LOWERCASE_F_SYMBOL = 'f'
-	TOKEN_ALPHABET_LOWERCASE_L_SYMBOL = 'l'
-	TOKEN_ALPHABET_LOWERCASE_N_SYMBOL = 'n'
-	TOKEN_ALPHABET_LOWERCASE_R_SYMBOL = 'r'
-	TOKEN_ALPHABET_LOWERCASE_S_SYMBOL = 's'
-	TOKEN_ALPHABET_LOWERCASE_T_SYMBOL = 't'
-	TOKEN_ALPHABET_LOWERCASE_U_SYMBOL = 'u'
-	TOKEN_ALPHABET_UPPERCASE_A_SYMBOL = 'A'
-	TOKEN_ALPHABET_UPPERCASE_B_SYMBOL = 'B'
-	TOKEN_ALPHABET_UPPERCASE_C_SYMBOL = 'C'
-	TOKEN_ALPHABET_UPPERCASE_D_SYMBOL = 'D'
-	TOKEN_ALPHABET_UPPERCASE_E_SYMBOL = 'E'
-	TOKEN_ALPHABET_UPPERCASE_F_SYMBOL = 'F'
-	TOKEN_NUMBER_0_SYMBOL             = '0'
-	TOKEN_NUMBER_1_SYMBOL             = '1'
-	TOKEN_NUMBER_2_SYMBOL             = '2'
-	TOKEN_NUMBER_3_SYMBOL             = '3'
-	TOKEN_NUMBER_4_SYMBOL             = '4'
-	TOKEN_NUMBER_5_SYMBOL             = '5'
-	TOKEN_NUMBER_6_SYMBOL             = '6'
-	TOKEN_NUMBER_7_SYMBOL             = '7'
-	TOKEN_NUMBER_8_SYMBOL             = '8'
-	TOKEN_NUMBER_9_SYMBOL             = '9'
-)
-
-var tokenNameMap = map[int]string{
-	TOKEN_EOF:                  "EOF",
-	TOKEN_LEFT_BRACKET:         "[",
-	TOKEN_RIGHT_BRACKET:        "]",
-	TOKEN_LEFT_BRACE:           "{",
-	TOKEN_RIGHT_BRACE:          "}",
-	TOKEN_COLON:                ":",
-	TOKEN_DOT:                  ".",
-	TOKEN_COMMA:                ",",
-	TOKEN_QUOTE:                "\"",
-	TOKEN_ESCAPE_CHARACTER:     "\\",
-	TOKEN_SLASH:                "/",
-	TOKEN_NEGATIVE:             "-",
-	TOKEN_NULL:                 "null",
-	TOKEN_TRUE:                 "true",
-	TOKEN_FLASE:                "false",
-	TOKEN_ALPHABET_LOWERCASE_A: "a",
-	TOKEN_ALPHABET_LOWERCASE_B: "b",
-	TOKEN_ALPHABET_LOWERCASE_C: "c",
-	TOKEN_ALPHABET_LOWERCASE_D: "d",
-	TOKEN_ALPHABET_LOWERCASE_E: "e",
-	TOKEN_ALPHABET_LOWERCASE_F: "f",
-	TOKEN_ALPHABET_LOWERCASE_L: "l",
-	TOKEN_ALPHABET_LOWERCASE_N: "n",
-	TOKEN_ALPHABET_LOWERCASE_R: "r",
-	TOKEN_ALPHABET_LOWERCASE_S: "s",
-	TOKEN_ALPHABET_LOWERCASE_T: "t",
-	TOKEN_ALPHABET_LOWERCASE_U: "u",
-	TOKEN_ALPHABET_UPPERCASE_A: "A",
-	TOKEN_ALPHABET_UPPERCASE_B: "B",
-	TOKEN_ALPHABET_UPPERCASE_C: "C",
-	TOKEN_ALPHABET_UPPERCASE_D: "D",
-	TOKEN_ALPHABET_UPPERCASE_E: "E",
-	TOKEN_ALPHABET_UPPERCASE_F: "F",
-	TOKEN_NUMBER_0:             "0",
-	TOKEN_NUMBER_1:             "1",
-	TOKEN_NUMBER_2:             "2",
-	TOKEN_NUMBER_3:             "3",
-	TOKEN_NUMBER_4:             "4",
-	TOKEN_NUMBER_5:             "5",
-	TOKEN_NUMBER_6:             "6",
-	TOKEN_NUMBER_7:             "7",
-	TOKEN_NUMBER_8:             "8",
-	TOKEN_NUMBER_9:             "9",
-}
-
 type Lexer struct {
-	JSONContent      strings.Builder
-	PaddingContent   strings.Builder
-	JSONSegment      string
-	TokenStack       []int
-	MirrorTokenStack []int
+	JSONContent      strings.Builder // input JSON content
+	PaddingContent   strings.Builder // padding content for ignored characters and escape characters, etc.
+	JSONSegment      string          // appended JSON segment by the AppendString() method.
+	TokenStack       []int           // token stack for input JSON
+	MirrorTokenStack []int           // token stack for auto-completed tokens
 }
 
+// new lexer for streaming JSON input
 func NewLexer() *Lexer {
 	return &Lexer{}
 }
 
+// get token on the stack top
 func (lexer *Lexer) getTopTokenOnStack() int {
 	tokenStackLen := len(lexer.TokenStack)
 	if tokenStackLen == 0 {
@@ -164,6 +27,7 @@ func (lexer *Lexer) getTopTokenOnStack() int {
 	return lexer.TokenStack[tokenStackLen-1]
 }
 
+// get token on the mirror stack top
 func (lexer *Lexer) getTopTokenOnMirrorStack() int {
 	mirrotTokenStackLen := len(lexer.MirrorTokenStack)
 	if mirrotTokenStackLen == 0 {
@@ -172,6 +36,7 @@ func (lexer *Lexer) getTopTokenOnMirrorStack() int {
 	return lexer.MirrorTokenStack[mirrotTokenStackLen-1]
 }
 
+// pop token on the stack top
 func (lexer *Lexer) popTokenStack() int {
 	tokenStackLen := len(lexer.TokenStack)
 	if tokenStackLen == 0 {
@@ -182,6 +47,7 @@ func (lexer *Lexer) popTokenStack() int {
 	return token
 }
 
+// pop token on the mirror stack top
 func (lexer *Lexer) popMirrorTokenStack() int {
 	mirrorTokenStackLen := len(lexer.MirrorTokenStack)
 	if mirrorTokenStackLen == 0 {
@@ -192,35 +58,31 @@ func (lexer *Lexer) popMirrorTokenStack() int {
 	return token
 }
 
+// push token into the stack
 func (lexer *Lexer) pushTokenStack(token int) {
 	lexer.TokenStack = append(lexer.TokenStack, token)
 }
 
+// push token into the mirror stack
 func (lexer *Lexer) pushMirrorTokenStack(token int) {
 	lexer.MirrorTokenStack = append(lexer.MirrorTokenStack, token)
 }
 
+// convert mirror stack token into string
 func (lexer *Lexer) dumpMirrorTokenStackToString() string {
 	var stackInString strings.Builder
 	for i := len(lexer.MirrorTokenStack) - 1; i >= 0; i-- {
-		stackInString.WriteString(tokenNameMap[lexer.MirrorTokenStack[i]])
+		stackInString.WriteString(tokenSymbolMap[lexer.MirrorTokenStack[i]])
 	}
 	return stackInString.String()
 }
 
+// skip JSON segment by length n
 func (lexer *Lexer) skipJSONSegment(n int) {
 	lexer.JSONSegment = lexer.JSONSegment[n:]
 }
 
-func (lexer *Lexer) streamStoppedInAnObjectStart() bool {
-	// `,`, `}` left
-	case1 := []int{
-		TOKEN_RIGHT_BRACE,
-		TOKEN_COMMA,
-	}
-	return matchStack(lexer.MirrorTokenStack, case1)
-}
-
+// check if JSON stream stopped at an object properity's key start, like `{"`
 func (lexer *Lexer) streamStoppedInAnObjectKeyStart() bool {
 	// `{`, `"` in stack, or `,`, `"` in stack
 	case1 := []int{
@@ -328,16 +190,17 @@ func (lexer *Lexer) streamStoppedInAnObjectObjectValueStart() bool {
 	return matchStack(lexer.TokenStack, case1) && matchStack(lexer.MirrorTokenStack, case2)
 }
 
+// check if JSON stream stopped in an object properity's negative number value, like `:-`
 func (lexer *Lexer) streamStoppedInAnObjectNegativeNumberValueStart() bool {
 	// `:`, `-` in stack
 	case1 := []int{
 		TOKEN_COLON,
 		TOKEN_NEGATIVE,
 	}
-
 	return matchStack(lexer.TokenStack, case1)
 }
 
+// check if JSON stream stopped in an object properity's negative number value, like `-`
 func (lexer *Lexer) streamStoppedInANegativeNumberValueStart() bool {
 	// `-` in stack
 	case1 := []int{
@@ -350,11 +213,13 @@ func (lexer *Lexer) streamStoppedInANegativeNumberValueStart() bool {
 	return matchStack(lexer.TokenStack, case1) && matchStack(lexer.MirrorTokenStack, case2)
 }
 
+// check if JSON stream stopped in an array
 func (lexer *Lexer) streamStoppedInAnArray() bool {
 	return lexer.getTopTokenOnMirrorStack() == TOKEN_RIGHT_BRACKET
 }
 
-func (lexer *Lexer) streamStoppedInAnArrayValueEnd() bool {
+// check if JSON stream stopped in an array's string value end, like `["value"`
+func (lexer *Lexer) streamStoppedInAnArrayStringValueEnd() bool {
 	// `"`, `"` in stack
 	case1 := []int{
 		TOKEN_QUOTE,
@@ -381,6 +246,7 @@ func (lexer *Lexer) streamStoppedInAnObjectNullValuePlaceholderStart() bool {
 	return matchStack(lexer.MirrorTokenStack, case1)
 }
 
+// check if JSON stream stopped in a string, like `""`
 func (lexer *Lexer) streamStoppedInAString() bool {
 	return lexer.getTopTokenOnStack() == TOKEN_QUOTE && lexer.getTopTokenOnMirrorStack() == TOKEN_QUOTE
 }
@@ -399,14 +265,17 @@ func (lexer *Lexer) streamStoppedInAnStringUnicodeEscape() bool {
 	return matchStack(lexer.TokenStack, case1) && matchStack(lexer.MirrorTokenStack, case2)
 }
 
+// check if JSON stream stopped in a number, like `[0-9]`
 func (lexer *Lexer) streamStoppedInANumber() bool {
 	return lexer.getTopTokenOnStack() == TOKEN_NUMBER
 }
 
+// check if JSON stream stopped in a number first decimal place, like `.?`
 func (lexer *Lexer) streamStoppedInANumberDecimalPart() bool {
 	return lexer.getTopTokenOnStack() == TOKEN_DOT
 }
 
+// check if JSON stream stopped in a number other decimal place (except first place), like `.[0-9]?`
 func (lexer *Lexer) streamStoppedInANumberDecimalPartMiddle() bool {
 	// `.`, TOKEN_NUMBER in stack
 	case1 := []int{
@@ -416,37 +285,44 @@ func (lexer *Lexer) streamStoppedInANumberDecimalPartMiddle() bool {
 	return matchStack(lexer.TokenStack, case1)
 }
 
+// check if JSON stream stopped in escape character, like `\`
 func (lexer *Lexer) streamStoppedWithLeadingEscapeCharacter() bool {
 	return lexer.getTopTokenOnStack() == TOKEN_ESCAPE_CHARACTER
 }
 
+// push escape character `\` into JSON content
 func (lexer *Lexer) pushEscapeCharacterIntoJSONContent() {
 	lexer.JSONContent.WriteByte(TOKEN_ESCAPE_CHARACTER_SYMBOL)
 }
 
+// push negative symbol `-` into JSON content
 func (lexer *Lexer) pushNegativeIntoJSONContent() {
 	lexer.JSONContent.WriteByte(TOKEN_NEGATIVE_SYMBOL)
 }
 
+// push byte into JSON content by given
 func (lexer *Lexer) pushByteIntoPaddingContent(b byte) {
 	lexer.PaddingContent.WriteByte(b)
 }
 
+// append padding content into JSON content
 func (lexer *Lexer) appendPaddingContentToJSONContent() {
 	lexer.JSONContent.WriteString(lexer.PaddingContent.String())
 }
 
+// check if padding content is empty
 func (lexer *Lexer) havePaddingContent() bool {
 	return lexer.PaddingContent.Len() > 0
 }
 
+// set padding content to empty
 func (lexer *Lexer) cleanPaddingContent() {
 	lexer.PaddingContent.Reset()
 }
 
+// lexer match JSON token method, convert JSON segment to JSON token
 func (lexer *Lexer) matchToken() (int, byte) {
-	// finish
-
+	// segment end
 	if len(lexer.JSONSegment) == 0 {
 		return TOKEN_EOF, byte(0)
 	}
@@ -458,7 +334,7 @@ func (lexer *Lexer) matchToken() (int, byte) {
 		return TOKEN_IGNORED, tokenSymbol
 	}
 
-	// check token
+	// match token
 	switch tokenSymbol {
 	case TOKEN_LEFT_BRACKET_SYMBOL:
 		lexer.skipJSONSegment(1)
@@ -583,7 +459,14 @@ func (lexer *Lexer) matchToken() (int, byte) {
 	}
 }
 
+// append JSON string to current JSON stream content
 func (lexer *Lexer) AppendString(str string) error {
+	return lexer.appendString(str)
+}
+
+// append JSON string to current JSON stream content
+// this method will traversal all token and generate mirror token for complete full JSON
+func (lexer *Lexer) appendString(str string) error {
 	lexer.JSONSegment = str
 	for {
 		token, tokenSymbol := lexer.matchToken()
@@ -720,25 +603,17 @@ func (lexer *Lexer) AppendString(str string) error {
 			// start process
 			lexer.JSONContent.WriteByte(tokenSymbol)
 			lexer.pushTokenStack(token)
-			if lexer.streamStoppedInAnObjectStart() {
-				// case for new object properity key quote coming
-
-				// push `"`, `:`, `n`, `u`, `l`, `l` into mirror stack
-				lexer.pushMirrorTokenStack(TOKEN_ALPHABET_LOWERCASE_L)
-				lexer.pushMirrorTokenStack(TOKEN_ALPHABET_LOWERCASE_L)
-				lexer.pushMirrorTokenStack(TOKEN_ALPHABET_LOWERCASE_U)
-				lexer.pushMirrorTokenStack(TOKEN_ALPHABET_LOWERCASE_N)
-				lexer.pushMirrorTokenStack(TOKEN_COLON)
-				lexer.pushMirrorTokenStack(TOKEN_QUOTE)
-			} else if lexer.streamStoppedInAnArray() {
+			if lexer.streamStoppedInAnArray() {
 
 				// push `"` into mirror stack
 				lexer.pushMirrorTokenStack(TOKEN_QUOTE)
-			} else if lexer.streamStoppedInAnArrayValueEnd() {
+			} else if lexer.streamStoppedInAnArrayStringValueEnd() {
 
 				// pop `"` from mirror stack
 				lexer.popMirrorTokenStack()
 			} else if lexer.streamStoppedInAnObjectKeyStart() {
+				fmt.Printf("lexer.streamStoppedInAnObjectKeyStart()\n")
+
 				// check if stopped in key of object's properity or value of object's properity
 
 				// push `"`, `:`, `n`, `u`, `l`, `l` into mirror stack
@@ -1454,6 +1329,12 @@ func (lexer *Lexer) AppendString(str string) error {
 	return nil
 }
 
+// complete the incomplete JSON string
 func (lexer *Lexer) CompleteJSON() string {
+	return lexer.completeJSON()
+}
+
+// complete the incomplete JSON string by concat JSON content and mirror tokens
+func (lexer *Lexer) completeJSON() string {
 	return lexer.JSONContent.String() + lexer.dumpMirrorTokenStackToString()
 }
