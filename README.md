@@ -61,6 +61,18 @@ PASS
 ok      github.com/karminski/streaming-json-go  2.539s
 ```
 
+Using Go 1.22.4, single thread on Apple M2 Ultra.
+```
+karminski@kurumi streaming-json-go % GOMAXPROCS=1 go test -bench=.
+goos: darwin
+goarch: arm64
+pkg: github.com/karminski/streaming-json-go
+BenchmarkParse/streaming-json-go-append-json-segment                199710              5468 ns/op          70.41 MB/s        3544 B/op         50 allocs/op
+BenchmarkParse/streaming-json-go-append-and-complete-json-segment   219049              5471 ns/op          70.37 MB/s        3544 B/op         50 allocs/op
+PASS
+ok  	github.com/karminski/streaming-json-go	2.548s
+```
+
 ### About Golang Version
 
 This library itself does not use any third-party Golang libraries, so it can run on version 1.14 and above. 
