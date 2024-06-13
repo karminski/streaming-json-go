@@ -82,11 +82,6 @@ func (lexer *Lexer) skipJSONSegment(n int) {
 	lexer.JSONSegment = lexer.JSONSegment[n:]
 }
 
-// push escape character `\` into JSON content
-func (lexer *Lexer) pushEscapeCharacterIntoJSONContent() {
-	lexer.JSONContent.WriteByte(TOKEN_ESCAPE_CHARACTER_SYMBOL)
-}
-
 // push negative symbol `-` into JSON content
 func (lexer *Lexer) pushNegativeIntoJSONContent() {
 	lexer.JSONContent.WriteByte(TOKEN_NEGATIVE_SYMBOL)
@@ -278,15 +273,6 @@ func (lexer *Lexer) appendString(str string) error {
 			if lexer.havePaddingContent() {
 				lexer.appendPaddingContentToJSONContent()
 				lexer.cleanPaddingContent()
-			}
-
-			// double escape character `\`, `\`
-			if lexer.streamStoppedWithLeadingEscapeCharacter() {
-				lexer.pushEscapeCharacterIntoJSONContent()
-				lexer.JSONContent.WriteByte(tokenSymbol)
-				// pop `\` from  stack
-				lexer.popTokenStack()
-				continue
 			}
 
 			// write current token symbol to JSON content
@@ -536,12 +522,6 @@ func (lexer *Lexer) appendString(str string) error {
 				continue
 			}
 
-			// check if json stream stopped with padding content
-			if lexer.havePaddingContent() {
-				lexer.appendPaddingContentToJSONContent()
-				lexer.cleanPaddingContent()
-			}
-
 			// write current token symbol to JSON content
 			lexer.JSONContent.WriteByte(tokenSymbol)
 
@@ -641,7 +621,7 @@ func (lexer *Lexer) appendString(str string) error {
 				continue
 			}
 
-			// check if json stream stopped with padding content
+			// check if json stream stopped with padding content, like case `[true , f`
 			if lexer.havePaddingContent() {
 				lexer.appendPaddingContentToJSONContent()
 				lexer.cleanPaddingContent()
@@ -730,8 +710,8 @@ func (lexer *Lexer) appendString(str string) error {
 			}
 			lexer.pushTokenStack(token)
 			lexer.popMirrorTokenStack()
-		case TOKEN_ALPHABET_LOWERCASE_N:
 
+		case TOKEN_ALPHABET_LOWERCASE_N:
 			// \n escape `\`, `n`
 			if lexer.streamStoppedWithLeadingEscapeCharacter() {
 				// push padding escape character `\` into JSON content
@@ -746,7 +726,7 @@ func (lexer *Lexer) appendString(str string) error {
 				continue
 			}
 
-			// check if json stream stopped with padding content
+			// check if json stream stopped with padding content, like case `[true , n`
 			if lexer.havePaddingContent() {
 				lexer.appendPaddingContentToJSONContent()
 				lexer.cleanPaddingContent()
@@ -771,8 +751,8 @@ func (lexer *Lexer) appendString(str string) error {
 				// in object, pop `n`
 				lexer.popMirrorTokenStack()
 			}
-		case TOKEN_ALPHABET_LOWERCASE_R:
 
+		case TOKEN_ALPHABET_LOWERCASE_R:
 			// \r escape `\`, `r`
 			if lexer.streamStoppedWithLeadingEscapeCharacter() {
 				// push padding escape character `\` into JSON content
@@ -812,8 +792,8 @@ func (lexer *Lexer) appendString(str string) error {
 			}
 			lexer.pushTokenStack(token)
 			lexer.popMirrorTokenStack()
-		case TOKEN_ALPHABET_LOWERCASE_S:
 
+		case TOKEN_ALPHABET_LOWERCASE_S:
 			// write current token symbol to JSON content
 			lexer.JSONContent.WriteByte(tokenSymbol)
 
@@ -856,7 +836,7 @@ func (lexer *Lexer) appendString(str string) error {
 				continue
 			}
 
-			// check if json stream stopped with padding content
+			// check if json stream stopped with padding content, like case `[true , t`
 			if lexer.havePaddingContent() {
 				lexer.appendPaddingContentToJSONContent()
 				lexer.cleanPaddingContent()
@@ -1034,7 +1014,7 @@ func (lexer *Lexer) appendString(str string) error {
 				continue
 			}
 
-			// check if json stream stopped with padding content
+			// check if json stream stopped with padding content, like `[1 , 1`
 			if lexer.havePaddingContent() {
 				lexer.appendPaddingContentToJSONContent()
 				lexer.cleanPaddingContent()
@@ -1143,7 +1123,7 @@ func (lexer *Lexer) appendString(str string) error {
 				continue
 			}
 
-			// check if json stream stopped with padding content
+			// check if json stream stopped with padding content, like `[1 , -`
 			if lexer.havePaddingContent() {
 				lexer.appendPaddingContentToJSONContent()
 				lexer.cleanPaddingContent()
