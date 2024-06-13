@@ -1,5 +1,8 @@
 # streaming-json-go
 
+[![codecov](https://codecov.io/github/karminski/streaming-json-go/graph/badge.svg?token=FOIHJ1NA7U)](https://codecov.io/github/karminski/streaming-json-go)
+
+
 ```go
 import streamingjson "github.com/karminski/streaming-json-go"
 ```
