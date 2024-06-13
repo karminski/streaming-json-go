@@ -19,27 +19,42 @@ In an era dominated by LLMs (Large Language Models), the ability to efficiently 
 
 ### Example Usage
 
-Here’s a quick example to get you started:
+Basically, this library is used to complete fragmented JSON, making it into syntactically correct JSON. For example:
+
+```{"a":``` will complete to ```{"a":null}```
+
+and When the JSON stream continues to output as:
+
+```{"a":[tr``` will complete to ```{"a":[true]}```
+
+Do not worry about the JSON stream stopping anywhere, such as at a comma:
+
+```{"a":[true],``` will complete to ```{"a":[true]}```
+
+Escaped characters? No problem:  
+
+```{"a":[true], "b": "this is unicode \u54"``` will complete to ```{"a":[true], "b": "this is unicode "}``` 
+
+(After the stream outputs the complete Unicode, it will then display.)
+
+
+**Here’s a quick example to get you started:**
 
 ```go
-// init
+// init, @NOTE: We need to assign a new lexer for each JSON stream.
 lexer := streamingjson.NewLexer()
 
 // append your JSON segment
-targetJSONSegmentA := `{"a":` 
-lexer.AppendString(targetJSONSegmentA)
+lexer.AppendString(`{"a":`)
 
 // complete the JSON
-completedJSONA := lexer.CompleteJSON()
-fmt.Printf("%s\n", completedJSONA) // will print `{"a":null}`
+fmt.Printf("%s\n", lexer.CompleteJSON()) // will print `{"a":null}`
 
 // append more JSON segment
-targetJSONSegmentB := `[tr`
-lexer.AppendString(targetJSONSegmentB)
+lexer.AppendString(`[tr`)
 
 // complete the JSON again
-completedJSONB := lexer.CompleteJSON()
-fmt.Printf("%s\n", completedJSONB) // will print `{"a":[true]}`
+fmt.Printf("%s\n", lexer.CompleteJSON()) // will print `{"a":[true]}`
 ```
 
 
