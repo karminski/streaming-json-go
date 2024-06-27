@@ -96,6 +96,14 @@ However, since the testify library is used in the tests, and the testify library
 
 If you need to run it on lower versions, you can consider copying the source code of this library directly into your project.
 
+### Try to Find This Library in Another Programming Language?
+
+Please see:
+
+- [streaming-json-go](https://github.com/karminski/streaming-json-go)
+- [streaming-json-py](https://github.com/karminski/streaming-json-py)
+- [streaming-json-js](https://github.com/karminski/streaming-json-js)
+
 
 ### License
 
