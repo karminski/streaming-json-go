@@ -1095,6 +1095,7 @@ func (lexer *Lexer) appendString(str string) error {
 				lexer.popTokenStack()
 				continue
 			} else if lexer.streamStoppedInAString() {
+				// in a string, and the preceding token isn't an escape character, write current token symbol to JSON content
 				lexer.JSONContent.WriteByte(tokenSymbol)
 				continue
 			}

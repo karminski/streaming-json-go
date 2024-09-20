@@ -107,6 +107,7 @@ func TestCompleteJSON_base(t *testing.T) {
 		`{"a":"\"\""}`: `{"a":"\"\""}`,
 		`{"\\`:         `{"\\":null}`,
 		`{"\/`:         `{"\/":null}`,
+		`{"/`:          `{"/":null}`,
 		`{"\b`:         `{"\b":null}`,
 		`{"\f`:         `{"\f":null}`,
 		`{"\n`:         `{"\n":null}`,
