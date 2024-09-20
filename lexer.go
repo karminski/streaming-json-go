@@ -1094,6 +1094,9 @@ func (lexer *Lexer) appendString(str string) error {
 				// pop `\` from  stack
 				lexer.popTokenStack()
 				continue
+			} else if lexer.streamStoppedInAString() {
+				lexer.JSONContent.WriteByte(tokenSymbol)
+				continue
 			}
 
 		case TOKEN_ESCAPE_CHARACTER:
