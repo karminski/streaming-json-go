@@ -43,7 +43,7 @@ func main() {
 	for _, jsonFragment := range arguments {
 		errInAppendString := lexer.AppendString(jsonFragment)
 		if errInAppendString != nil {
-			panic("invalied json string appended: " + errInAppendString.Error())
+			panic("invalid json string appended: " + errInAppendString.Error())
 		}
 		completedJSON := lexer.CompleteJSON()
 		fmt.Printf("%s\n", completedJSON)
