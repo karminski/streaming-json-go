@@ -426,7 +426,7 @@ func (lexer *Lexer) appendString(str string) error {
 				lexer.popMirrorTokenStack()
 
 			} else {
-				return fmt.Errorf("invalied quote token in json stream")
+				return fmt.Errorf("invalid quote token in json stream")
 			}
 		case TOKEN_COLON:
 

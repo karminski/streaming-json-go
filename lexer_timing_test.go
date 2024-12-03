@@ -41,7 +41,7 @@ func benchmarkAppendAndCompleteJSON(b *testing.B, s string) {
 			}
 			completedJSON = lexer.CompleteJSON()
 			if len(completedJSON) == 0 {
-				panic(fmt.Errorf("invalied completed JSON length"))
+				panic(fmt.Errorf("invalid completed JSON length"))
 			}
 		}
 	})
